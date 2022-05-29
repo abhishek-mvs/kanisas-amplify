@@ -118,7 +118,7 @@ class LoadDocuments extends React.Component {
                                 </tr>
                                 <tr>
                                 <td>
-                                       {listItems.map(item => (<div  style={documentStyle}><h6 style={headingStyle}>{item.KCTITLE} {item.KCTITLE_JPN_JP}</h6>{item.CONTENT} {item.CONTENT_JPN_JP}<hr/></div>))}
+                                       {listItems.map(item => (<div  style={documentStyle}><h6 style={headingStyle}>{item.KCTITLE} {item.KCTITLE_JPN_JP}</h6>{item.CONTENT} {item.METADATA_CONTENT_JPN_JP}<hr/></div>))}
                                 </td>
                             </tr>
                             </tbody>
