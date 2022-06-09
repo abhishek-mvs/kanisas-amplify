@@ -1,8 +1,7 @@
 import React from 'react';
-import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
 import CheckboxTree from 'react-checkbox-tree';
-import Chips, {Chip} from 'react-chips'
+import Chips from 'react-chips'
 import Urls from './Urls'
 
 class LoadDocuments extends React.Component {
@@ -152,7 +151,6 @@ class LoadDocuments extends React.Component {
 
     render() {
         const {error, isLoaded, listLoaded, listItems, totalHits, searchDisplayQuery} = this.state;
-        const {t} = this.props;
 
         const searchHitsStyle = {
             color: 'blue',
@@ -185,7 +183,6 @@ class LoadDocuments extends React.Component {
         const descriptionStyle = {
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            height: '30px',
             maxHeight: '50px'
         }
         const entitlementStyle = {
@@ -236,6 +233,7 @@ class LoadDocuments extends React.Component {
 
                 </div>
                 <div style={searchResultsStyle} className="col-lg-8">
+                    {error}
                     <pre
                         style={searchHitsStyle}
                         className="">{totalHits != null ? (searchDisplayQuery + totalHits + " results") : ""}</pre>
