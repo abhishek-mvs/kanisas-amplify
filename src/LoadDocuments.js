@@ -15,6 +15,7 @@ class LoadDocuments extends React.Component {
             productsMap: {},
             productNodes: [],
             error: null,
+            loadedDocumentsCount: 1,
             isLoaded: false,
             items: [],
             listLoaded: false,
@@ -28,6 +29,7 @@ class LoadDocuments extends React.Component {
         this.handleSearchChange = this.handleSearchChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.loadList = this.loadList.bind(this);
+        this.loadMore = this.loadMore.bind(this);
         this.onProductsChange = this.onProductsChange.bind(this);
     }
 
@@ -40,7 +42,7 @@ class LoadDocuments extends React.Component {
     }
 
     handleSubmit(event) {
-        this.loadList();
+        this.loadList(0);
         event.preventDefault();
     }
 
@@ -72,7 +74,7 @@ class LoadDocuments extends React.Component {
                                 }]
                             });
                             this.loadProducts();
-                            this.loadList();
+                            this.loadList(0);
                         });
                     }
                 }
@@ -102,13 +104,21 @@ class LoadDocuments extends React.Component {
             )
     }
 
+    loadMore() {
+        this.loadList(this.state.loadedDocumentsCount);
+    }
 
-    loadList() {
-        this.setState({
-            listItems: [], listLoaded: false, totalHits: null,
-            searchDisplayQuery: "Entitlements = " + (this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root") + "\nProducts = " + (this.state.checkedProducts.length > 0 ? this.state.checkedProducts.join(",") : "NONE")
-                + "\nQuery = " + (this.state.searchString ? this.state.searchString : "NONE") + "\nreturned "
-        });
+    loadList(startKCNum) {
+        if (startKCNum === 0) {
+            this.setState({
+                loadedDocumentsCount: 1
+            })
+            this.setState({
+                listItems: [], listLoaded: false, totalHits: null,
+                searchDisplayQuery: "Entitlements = " + (this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root") + "\nProducts = " + (this.state.checkedProducts.length > 0 ? this.state.checkedProducts.join(",") : "NONE")
+                    + "\nQuery = " + (this.state.searchString ? this.state.searchString : "NONE") + "\nreturned "
+            });
+        }
         fetch(Urls.DOCUMENT_SEARCH, {
             method: 'post',
             body: JSON.stringify({
@@ -116,6 +126,8 @@ class LoadDocuments extends React.Component {
                     "userQuery": this.state.searchString,
                     "entitlements": this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root",
                     "products": this.state.checkedProducts.length > 0 ? this.state.checkedProducts.map(chip => this.state.productsMap[chip]).join(",") : null,
+                    "numKCs": 30,
+                    "startKCNum": startKCNum
                 }
             })
         })
@@ -126,7 +138,8 @@ class LoadDocuments extends React.Component {
                             this.setState({
                                 listLoaded: true,
                                 totalHits: result.totalHits,
-                                listItems: result.hits
+                                listItems: this.state.listItems.concat(result.hits),
+                                loadedDocumentsCount: this.state.loadedDocumentsCount + result.hits.length
                             });
                         });
                     } else {
@@ -150,7 +163,15 @@ class LoadDocuments extends React.Component {
 
 
     render() {
-        const {error, isLoaded, listLoaded, listItems, totalHits, searchDisplayQuery} = this.state;
+        const {
+            error,
+            isLoaded,
+            listLoaded,
+            listItems,
+            totalHits,
+            loadedDocumentsCount,
+            searchDisplayQuery
+        } = this.state;
 
         const searchHitsStyle = {
             color: 'blue',
@@ -245,11 +266,10 @@ class LoadDocuments extends React.Component {
                             <div style={descriptionStyle}>{item.CONTENT} {item.CONTENT_JPN_JP}</div>
 
                         </div>)) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
+                    {totalHits > loadedDocumentsCount ? <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}
                 </div>
             </div>
         );
-
-
     }
 }
 
