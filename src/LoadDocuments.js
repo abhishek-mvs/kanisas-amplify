@@ -11,6 +11,9 @@ class LoadDocuments extends React.Component {
             checkedEntitlements: ['SAL_root', 'SAL_BTPUBLIC_1'],
             expandedEntitlements: ['Entitlements'],
             entitlementNodes: [],
+            checkedEnterpriseSegments: [],
+            expandedEnterpriseSegments: [],
+            enterpriseSegmentsNodes: [],
             checkedProducts: [],
             productsMap: {},
             productNodes: [],
@@ -74,7 +77,25 @@ class LoadDocuments extends React.Component {
                                 }]
                             });
                             this.loadProducts();
+                            this.loadEnterpriseSegments();
                             this.loadList(0);
+                        });
+                    }
+                }
+            )
+    }
+
+    loadEnterpriseSegments() {
+        fetch(Urls.GET_TAXONOMIES + "action=getEnterpriseSegments", {
+            method: 'get'
+        })
+            .then(
+                (result) => {
+                    if (result.status === 200) {
+                        result.json().then(result => {
+                            this.setState({
+                                enterpriseSegmentsNodes: result
+                            });
                         });
                     }
                 }
@@ -115,7 +136,9 @@ class LoadDocuments extends React.Component {
             })
             this.setState({
                 listItems: [], listLoaded: false, totalHits: null,
-                searchDisplayQuery: "Entitlements = " + (this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root") + "\nProducts = " + (this.state.checkedProducts.length > 0 ? this.state.checkedProducts.join(",") : "NONE")
+                searchDisplayQuery: "Entitlements = " + (this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root") +
+                    "\nSegments = " + (this.state.checkedEnterpriseSegments.length > 0 ? this.state.checkedEnterpriseSegments.join(",") : "NONE") +
+                    "\nProducts = " + (this.state.checkedProducts.length > 0 ? this.state.checkedProducts.join(",") : "NONE")
                     + "\nQuery = " + (this.state.searchString ? this.state.searchString : "NONE") + "\nreturned "
             });
         }
@@ -125,6 +148,7 @@ class LoadDocuments extends React.Component {
                 "searchParams": {
                     "userQuery": this.state.searchString,
                     "entitlements": this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root",
+                    "segments": this.state.checkedEnterpriseSegments.length > 0 ? this.state.checkedEnterpriseSegments.join(",") : null,
                     "products": this.state.checkedProducts.length > 0 ? this.state.checkedProducts.map(chip => this.state.productsMap[chip]).join(",") : null,
                     "numKCs": 30,
                     "startKCNum": startKCNum
@@ -231,7 +255,20 @@ class LoadDocuments extends React.Component {
                                 onExpand={expanded => this.setState({expandedEntitlements: expanded})}
                             />
                         </div>
-                        Choose Products
+                        Segments
+                        <div style={entitlementStyle}
+                             className="border rounded">
+                            <CheckboxTree
+                                iconsClass="fa5"
+                                showNodeIcon={false}
+                                nodes={this.state.enterpriseSegmentsNodes}
+                                checked={this.state.checkedEnterpriseSegments}
+                                expanded={this.state.expandedEnterpriseSegments}
+                                onCheck={checked => this.setState({checkedEnterpriseSegments: checked})}
+                                onExpand={expanded => this.setState({expandedEnterpriseSegments: expanded})}
+                            />
+                        </div>
+                        Products
                         <div style={chipsStyle}>
                             <Chips
                                 value={this.state.checkedProducts}
@@ -241,10 +278,11 @@ class LoadDocuments extends React.Component {
                                 fromSuggestionsOnly={true}
                             /></div>
                         <form onSubmit={this.handleSubmit}>
-                            <label htmlFor="search">Search Query</label>
+                            <label htmlFor="search">Keywords</label>
                             <input type="text" value={this.state.searchString}
                                    onChange={this.handleSearchChange}
                                    className="form-control"
+                                   autoComplete="off"
                                    id="search"/>
                             <Button type="submit" onClick={this.handleSubmit}
                                     className="mt-2 btn btn-primary">Search</Button>
@@ -266,7 +304,8 @@ class LoadDocuments extends React.Component {
                             <div style={descriptionStyle}>{item.CONTENT} {item.CONTENT_JPN_JP}</div>
 
                         </div>)) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
-                    {totalHits > loadedDocumentsCount ? <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}
+                    {totalHits > loadedDocumentsCount ?
+                        <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}
                 </div>
             </div>
         );
