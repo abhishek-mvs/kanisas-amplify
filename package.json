@@ -10,6 +10,7 @@
     "react-chips": "^0.8.0",
     "react-doc": "^1.2.6",
     "react-dom": "^16.14.0",
+    "react-dropdown": "^1.10.0",
     "react-scripts": "^5.0.1",
     "web-vitals": "^2.1.4"
   },

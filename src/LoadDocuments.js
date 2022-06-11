@@ -3,6 +3,9 @@ import Button from 'react-bootstrap/Button';
 import CheckboxTree from 'react-checkbox-tree';
 import Chips from 'react-chips'
 import Urls from './Urls'
+import Dropdown from 'react-dropdown';
+import 'react-dropdown/style.css';
+
 
 
 class LoadDocuments extends React.Component {
@@ -15,6 +18,7 @@ class LoadDocuments extends React.Component {
             checkedEnterpriseSegments: [],
             expandedEnterpriseSegments: [],
             enterpriseSegmentsNodes: [],
+            documentTypes: [],
             checkedProducts: [],
             productsMap: {},
             productNodes: [],
@@ -28,6 +32,7 @@ class LoadDocuments extends React.Component {
             staticDataLoaded: false,
             uniqueID: -1,
             searchString: '',
+            selectedDocumentType: '',
             searchDisplayQuery: null,
             resultsWidth: 'col-lg-8',
             documentWidth: 'hidden-lg',
@@ -39,10 +44,15 @@ class LoadDocuments extends React.Component {
         this.loadMore = this.loadMore.bind(this);
         this.openDocument = this.openDocument.bind(this);
         this.onProductsChange = this.onProductsChange.bind(this);
+        this.handleDocumentTypeChange = this.handleDocumentTypeChange.bind(this);
     }
 
     onProductsChange = checkedProducts => {
         this.setState({checkedProducts});
+    }
+
+    handleDocumentTypeChange(event) {
+        this.setState({selectedDocumentType: event.value})
     }
 
     handleSearchChange(event) {
@@ -117,6 +127,7 @@ class LoadDocuments extends React.Component {
                             });
                             this.loadProducts();
                             this.loadEnterpriseSegments();
+                            this.loadDocumentTypes();
                             this.loadList(0);
                         });
                     }
@@ -134,6 +145,29 @@ class LoadDocuments extends React.Component {
                         result.json().then(result => {
                             this.setState({
                                 enterpriseSegmentsNodes: result
+                            });
+                        });
+                    }
+                }
+            )
+    }
+
+    loadDocumentTypes() {
+        fetch(Urls.GET_TAXONOMIES + "action=getTaxoConcepts&param1=DT_DocType", {
+            method: 'get'
+        })
+            .then(
+                (result) => {
+                    if (result.status === 200) {
+                        result.json().then(result => {
+                            let nodesTemp = result.map(concept => {
+                                return {
+                                    value: concept.id,
+                                    label: concept.names['LA_eng_US']
+                                };
+                            })
+                            this.setState({
+                                documentTypes: nodesTemp
                             });
                         });
                     }
@@ -181,6 +215,39 @@ class LoadDocuments extends React.Component {
                     + "\nQuery = " + (this.state.searchString ? this.state.searchString : "NONE") + "\nreturned "
             });
         }
+        let documentIdMap = {"DT_DL_1":"10", "DT_HOWTO_1":"9", "DT_REFERENCE_1":"8", "DT_KNOWNERROR_1":"7", "DT_PROBLEMSOLUTION_1":"6"};
+        //TODO Need to remove this hardCoding
+        let constraintChildren = [
+            {
+                "operation": "And", "children": [
+                    {
+                        "operation": "Equal",
+                        "attributeType": "integer",
+                        "attributeName": "RATINGCOUNT",
+                        "value": "0"
+                    },
+                    {
+                        "operation": "Greater",
+                        "attributeType": "integer",
+                        "attributeName": "RATING",
+                        "value": "125"
+                    }
+                ]
+            },
+            {
+                "operation": "Or", "children": [
+                    {"operation": "Under", "nodeId": "LA_eng_US"}
+                ]
+            }
+        ];
+        if(this.state.selectedDocumentType !== '' && documentIdMap[this.state.selectedDocumentType] !== null) {
+            constraintChildren = constraintChildren.concat({
+                "operation": "Equal",
+                "attributeType": "integer",
+                "attributeName": "TEMPLATEID",
+                "value": documentIdMap[this.state.selectedDocumentType]
+            });
+        }
         fetch(Urls.DOCUMENT_SEARCH, {
             method: 'post',
             body: JSON.stringify({
@@ -193,29 +260,7 @@ class LoadDocuments extends React.Component {
                     "startKCNum": startKCNum,
                     "constraints": {
                         "operation": "And",
-                        "children": [
-                            {
-                                "operation": "And", "children": [
-                                    {
-                                        "operation": "Equal",
-                                        "attributeType": "integer",
-                                        "attributeName": "RATINGCOUNT",
-                                        "value": "0"
-                                    },
-                                    {
-                                        "operation": "Greater",
-                                        "attributeType": "integer",
-                                        "attributeName": "RATING",
-                                        "value": "125"
-                                    }
-                                ]
-                            },
-                            {
-                                "operation": "Or", "children": [
-                                    {"operation": "Under", "nodeId": "LA_eng_US"}
-                                ]
-                            }
-                        ]
+                        "children": constraintChildren
                     }
                 }
             })
@@ -353,6 +398,14 @@ class LoadDocuments extends React.Component {
                                 expanded={this.state.expandedEnterpriseSegments}
                                 onCheck={checked => this.setState({checkedEnterpriseSegments: checked})}
                                 onExpand={expanded => this.setState({expandedEnterpriseSegments: expanded})}
+                            />
+                        </div>
+                        Document Type
+                        <div
+                             className="border rounded">
+                            <Dropdown
+                                options={this.state.documentTypes}
+                                onChange={this.handleDocumentTypeChange}
                             />
                         </div>
                         Products
