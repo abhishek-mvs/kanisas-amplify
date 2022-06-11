@@ -7,7 +7,6 @@ import Dropdown from 'react-dropdown';
 import 'react-dropdown/style.css';
 
 
-
 class LoadDocuments extends React.Component {
     constructor(props) {
         super(props);
@@ -19,6 +18,7 @@ class LoadDocuments extends React.Component {
             expandedEnterpriseSegments: [],
             enterpriseSegmentsNodes: [],
             documentTypes: [],
+            languages: [],
             checkedProducts: [],
             productsMap: {},
             productNodes: [],
@@ -33,6 +33,7 @@ class LoadDocuments extends React.Component {
             uniqueID: -1,
             searchString: '',
             selectedDocumentType: '',
+            selectedLanguage: 'LA_eng_US',
             searchDisplayQuery: null,
             resultsWidth: 'col-lg-8',
             documentWidth: 'hidden-lg',
@@ -45,10 +46,15 @@ class LoadDocuments extends React.Component {
         this.openDocument = this.openDocument.bind(this);
         this.onProductsChange = this.onProductsChange.bind(this);
         this.handleDocumentTypeChange = this.handleDocumentTypeChange.bind(this);
+        this.handleLanguageChange = this.handleLanguageChange.bind(this);
     }
 
     onProductsChange = checkedProducts => {
         this.setState({checkedProducts});
+    }
+
+    handleLanguageChange(event) {
+        this.setState({selectedLanguage: event.value})
     }
 
     handleDocumentTypeChange(event) {
@@ -128,6 +134,7 @@ class LoadDocuments extends React.Component {
                             this.loadProducts();
                             this.loadEnterpriseSegments();
                             this.loadDocumentTypes();
+                            this.loadLanguages();
                             this.loadList(0);
                         });
                     }
@@ -175,6 +182,29 @@ class LoadDocuments extends React.Component {
             )
     }
 
+    loadLanguages() {
+        fetch(Urls.GET_TAXONOMIES + "action=getTaxoConcepts&param1=LA_root", {
+            method: 'get'
+        })
+            .then(
+                (result) => {
+                    if (result.status === 200) {
+                        result.json().then(result => {
+                            let nodesTemp = result.map(concept => {
+                                return {
+                                    value: concept.id,
+                                    label: concept.names['LA_eng_US']
+                                };
+                            })
+                            this.setState({
+                                languages: nodesTemp
+                            });
+                        });
+                    }
+                }
+            )
+    }
+
     loadProducts() {
         fetch(Urls.GET_TAXONOMIES + "action=getTaxoConcepts&param1=SG_root", {
             method: 'get'
@@ -215,7 +245,13 @@ class LoadDocuments extends React.Component {
                     + "\nQuery = " + (this.state.searchString ? this.state.searchString : "NONE") + "\nreturned "
             });
         }
-        let documentIdMap = {"DT_DL_1":"10", "DT_HOWTO_1":"9", "DT_REFERENCE_1":"8", "DT_KNOWNERROR_1":"7", "DT_PROBLEMSOLUTION_1":"6"};
+        let documentIdMap = {
+            "DT_DL_1": "10",
+            "DT_HOWTO_1": "9",
+            "DT_REFERENCE_1": "8",
+            "DT_KNOWNERROR_1": "7",
+            "DT_PROBLEMSOLUTION_1": "6"
+        };
         //TODO Need to remove this hardCoding
         let constraintChildren = [
             {
@@ -236,11 +272,11 @@ class LoadDocuments extends React.Component {
             },
             {
                 "operation": "Or", "children": [
-                    {"operation": "Under", "nodeId": "LA_eng_US"}
+                    {"operation": "Under", "nodeId": this.state.selectedLanguage}
                 ]
             }
         ];
-        if(this.state.selectedDocumentType !== '' && documentIdMap[this.state.selectedDocumentType] !== null) {
+        if (this.state.selectedDocumentType !== '' && documentIdMap[this.state.selectedDocumentType] !== null) {
             constraintChildren = constraintChildren.concat({
                 "operation": "Equal",
                 "attributeType": "integer",
@@ -319,7 +355,7 @@ class LoadDocuments extends React.Component {
         };
         const submitBtnStyle = {
             backgroundColor: '#666ad1',
-            color:'white',
+            color: 'white',
             borderColor: '#666ad1'
         };
         const searchControlsStyle = {
@@ -374,6 +410,14 @@ class LoadDocuments extends React.Component {
             <div className="row no-gutters">
                 <div style={searchControlsStyle} className="col-lg-3">
                     <div className="container">
+                        Language
+                        <div
+                            className="border rounded">
+                            <Dropdown value="English"
+                                      options={this.state.languages}
+                                      onChange={this.handleLanguageChange}
+                            />
+                        </div>
                         Entitlements
                         <div style={entitlementStyle}
                              className="border rounded">
@@ -402,7 +446,7 @@ class LoadDocuments extends React.Component {
                         </div>
                         Document Type
                         <div
-                             className="border rounded">
+                            className="border rounded">
                             <Dropdown
                                 options={this.state.documentTypes}
                                 onChange={this.handleDocumentTypeChange}
