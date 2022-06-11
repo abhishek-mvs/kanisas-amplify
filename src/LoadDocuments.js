@@ -28,12 +28,16 @@ class LoadDocuments extends React.Component {
             staticDataLoaded: false,
             uniqueID: -1,
             searchString: '',
-            searchDisplayQuery: null
+            searchDisplayQuery: null,
+            resultsWidth: 'col-lg-8',
+            documentWidth: 'hidden-lg',
+            currentDocument: null
         };
         this.handleSearchChange = this.handleSearchChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.loadList = this.loadList.bind(this);
         this.loadMore = this.loadMore.bind(this);
+        this.openDocument = this.openDocument.bind(this);
         this.onProductsChange = this.onProductsChange.bind(this);
     }
 
@@ -43,6 +47,40 @@ class LoadDocuments extends React.Component {
 
     handleSearchChange(event) {
         this.setState({searchString: event.target.value});
+    }
+
+    openDocument(event) {
+        event.preventDefault();
+        let url = event.currentTarget.getAttribute("data-external-url");
+        let fileName = url.substring(url.indexOf("Publishing/") + "Publishing/".length);
+        console.log("Called open Document " + fileName);
+        fetch(Urls.OPEN_DOCUMENT, {
+            method: 'post',
+            body: JSON.stringify({
+                "fileName": fileName
+            })
+        })
+            .then(
+                (result) => {
+                    if (result.status === 200) {
+                        result.text().then((text) => {
+                            text = text.replace("#6699CC", "#303f9f")
+                            this.setState({
+                                currentDocument: text,
+                                resultsWidth: 'col-lg-4',
+                                documentWidth: 'col-lg-4'
+                            })
+                        });
+                    }
+                }, (error) => {
+                    this.setState({
+                        currentDocument: "",
+                        resultsWidth: 'col-lg-8',
+                        documentWidth: 'hidden-lg',
+                        error
+                    });
+                }
+            )
     }
 
     handleSubmit(event) {
@@ -152,7 +190,33 @@ class LoadDocuments extends React.Component {
                     "segments": this.state.checkedEnterpriseSegments.length > 0 ? this.state.checkedEnterpriseSegments.join(",") : null,
                     "products": this.state.checkedProducts.length > 0 ? this.state.checkedProducts.map(chip => this.state.productsMap[chip]).join(",") : null,
                     "numKCs": 30,
-                    "startKCNum": startKCNum
+                    "startKCNum": startKCNum,
+                    "constraints": {
+                        "operation": "And",
+                        "children": [
+                            {
+                                "operation": "And", "children": [
+                                    {
+                                        "operation": "Equal",
+                                        "attributeType": "integer",
+                                        "attributeName": "RATINGCOUNT",
+                                        "value": "0"
+                                    },
+                                    {
+                                        "operation": "Greater",
+                                        "attributeType": "integer",
+                                        "attributeName": "RATING",
+                                        "value": "125"
+                                    }
+                                ]
+                            },
+                            {
+                                "operation": "Or", "children": [
+                                    {"operation": "Under", "nodeId": "LA_eng_US"}
+                                ]
+                            }
+                        ]
+                    }
                 }
             })
         })
@@ -195,15 +259,23 @@ class LoadDocuments extends React.Component {
             listItems,
             totalHits,
             loadedDocumentsCount,
-            searchDisplayQuery
+            searchDisplayQuery,
+            resultsWidth,
+            documentWidth,
+            currentDocument
         } = this.state;
 
         const searchHitsStyle = {
-            color: 'blue',
+            color: '#666ad1',
             fontSize: '12px',
             fontWeight: 'bold',
             lineHeight: '120%',
             margin: 0
+        };
+        const submitBtnStyle = {
+            backgroundColor: '#666ad1',
+            color:'white',
+            borderColor: '#666ad1'
         };
         const searchControlsStyle = {
             textAlign: 'left',
@@ -223,13 +295,21 @@ class LoadDocuments extends React.Component {
             padding: '5px',
             verticalAlign: 'top'
         };
+        const documentViewStyle = {
+            textAlign: 'left',
+            margin: '2px',
+            padding: '5px 5px 5px 2px',
+            verticalAlign: 'top',
+            borderLeft: '3px solid #303f9f'
+        };
+
         const headingStyle = {
             margin: '0px',
             fontSize: '14px'
         }
         const idStyle = {
-            fontWeight: 'bold',
-            color: 'green'
+            color: '#001970',
+            fontWeight: 'bold'
         };
         const descriptionStyle = {
             overflow: 'hidden',
@@ -292,33 +372,38 @@ class LoadDocuments extends React.Component {
                                    autoComplete="off"
                                    id="search"/>
                             <Button type="submit" onClick={this.handleSubmit}
-                                    className="mt-2 btn btn-primary">Search</Button>
+                                    className="mt-2 btn" style={submitBtnStyle}>Search</Button>
 
                         </form>
                     </div>
 
                 </div>
-                <div style={searchResultsStyle} className="col-lg-8">
-                    {error}
+                <div style={searchResultsStyle} className={resultsWidth}>
                     <pre
                         style={searchHitsStyle}
                         className="">{totalHits != null ? (searchDisplayQuery + totalHits + " results") : ""}</pre>
                     {(listItems != null && listItems.length > 0) ? listItems.map(item => (
-                        <div key={item.ID} style={documentStyle}>
-                            <hr className="my-1"/>
-                            <div style={headingStyle}>
+                        <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}>
+                            <div key={item.ID} style={documentStyle}>
+                                <hr className="my-1"/>
+                                <div style={headingStyle}>
                             <span
                                 style={idStyle}>{item.KCEXTERNALID}</span> <span
-                                dangerouslySetInnerHTML={{__html: item.KCTITLE}}/> <span
-                                dangerouslySetInnerHTML={{__html: item.KCTITLE_JPN_JP}}/></div>
-                            <div
-                                style={descriptionStyle}> <span
-                                dangerouslySetInnerHTML={{__html: item.CONTENT}}/> <span
-                                dangerouslySetInnerHTML={{__html: item.CONTENT_JPN_JP}}/></div>
+                                    dangerouslySetInnerHTML={{__html: item.KCTITLE}}/> <span
+                                    dangerouslySetInnerHTML={{__html: item.KCTITLE_JPN_JP}}/>
+                                </div>
+                                <div
+                                    style={descriptionStyle}> <span
+                                    dangerouslySetInnerHTML={{__html: item.CONTENT}}/> <span
+                                    dangerouslySetInnerHTML={{__html: item.CONTENT_JPN_JP}}/></div>
 
-                        </div>)) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
+                            </div>
+                        </a>)) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
                     {totalHits > loadedDocumentsCount ?
                         <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}
+                </div>
+                <div style={documentViewStyle} className={documentWidth}
+                     dangerouslySetInnerHTML={{__html: currentDocument}}>
                 </div>
             </div>
         );

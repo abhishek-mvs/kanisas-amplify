@@ -23,7 +23,13 @@
 .App-link {
   color: blue;
 }
+.tabbar {
+  margin: 10px;
+}
 
+.tabbar br {
+  display: none;
+}
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
