@@ -4,6 +4,7 @@ import CheckboxTree from 'react-checkbox-tree';
 import Chips from 'react-chips'
 import Urls from './Urls'
 
+
 class LoadDocuments extends React.Component {
     constructor(props) {
         super(props);
@@ -223,10 +224,16 @@ class LoadDocuments extends React.Component {
             verticalAlign: 'top'
         };
         const headingStyle = {
-            margin: '0px'
+            margin: '0px',
+            fontSize: '14px'
+        }
+        const idStyle = {
+            fontWeight: 'bold',
+            color: 'green'
         };
         const descriptionStyle = {
             overflow: 'hidden',
+            fontSize: '12px',
             textOverflow: 'ellipsis',
             maxHeight: '50px'
         }
@@ -299,9 +306,15 @@ class LoadDocuments extends React.Component {
                     {(listItems != null && listItems.length > 0) ? listItems.map(item => (
                         <div key={item.ID} style={documentStyle}>
                             <hr className="my-1"/>
-                            <h6
-                                style={headingStyle}>{item.KCEXTERNALID} {item.KCTITLE} {item.KCTITLE_JPN_JP}</h6>
-                            <div style={descriptionStyle}>{item.CONTENT} {item.CONTENT_JPN_JP}</div>
+                            <div style={headingStyle}>
+                            <span
+                                style={idStyle}>{item.KCEXTERNALID}</span> <span
+                                dangerouslySetInnerHTML={{__html: item.KCTITLE}}/> <span
+                                dangerouslySetInnerHTML={{__html: item.KCTITLE_JPN_JP}}/></div>
+                            <div
+                                style={descriptionStyle}> <span
+                                dangerouslySetInnerHTML={{__html: item.CONTENT}}/> <span
+                                dangerouslySetInnerHTML={{__html: item.CONTENT_JPN_JP}}/></div>
 
                         </div>)) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
                     {totalHits > loadedDocumentsCount ?
