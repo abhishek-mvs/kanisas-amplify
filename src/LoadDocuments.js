@@ -263,7 +263,7 @@ class LoadDocuments extends React.Component {
                         "value": "0"
                     },
                     {
-                        "operation": "Greater",
+                        "operation": "Less",
                         "attributeType": "integer",
                         "attributeName": "RATING",
                         "value": "125"
