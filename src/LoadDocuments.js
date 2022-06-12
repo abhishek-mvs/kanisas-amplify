@@ -5,7 +5,8 @@ import Chips from 'react-chips'
 import Urls from './Urls'
 import Dropdown from 'react-dropdown';
 import 'react-dropdown/style.css';
-import { saveAs } from 'file-saver';
+import {saveAs} from 'file-saver';
+import {FormCheck} from "react-bootstrap";
 
 
 class LoadDocuments extends React.Component {
@@ -38,7 +39,9 @@ class LoadDocuments extends React.Component {
             searchDisplayQuery: null,
             resultsWidth: 'col-lg-8',
             documentWidth: 'hidden-lg',
-            currentDocument: null
+            currentDocument: null,
+            selectedDocumentID: -1,
+            debug: false
         };
         this.handleSearchChange = this.handleSearchChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
@@ -47,9 +50,11 @@ class LoadDocuments extends React.Component {
         this.loadMore = this.loadMore.bind(this);
         this.openDocument = this.openDocument.bind(this);
         this.openJSON = this.openJSON.bind(this);
+        this.closeSideWindow = this.closeSideWindow.bind(this);
         this.onProductsChange = this.onProductsChange.bind(this);
         this.handleDocumentTypeChange = this.handleDocumentTypeChange.bind(this);
         this.handleLanguageChange = this.handleLanguageChange.bind(this);
+        this.debugChanged = this.debugChanged.bind(this);
     }
 
     onProductsChange = checkedProducts => {
@@ -70,7 +75,11 @@ class LoadDocuments extends React.Component {
 
     openDocument(event) {
         event.preventDefault();
+        this.setState({
+            selectedDocumentID: -1
+        });
         let url = event.currentTarget.getAttribute("data-external-url");
+        let docID = event.currentTarget.getAttribute("data-doc-id");
         let fileName = url.substring(url.indexOf("Publishing/") + "Publishing/".length);
         console.log("Called open Document " + fileName);
         fetch(Urls.OPEN_DOCUMENT, {
@@ -85,6 +94,7 @@ class LoadDocuments extends React.Component {
                         result.text().then((text) => {
                             text = text.replace("#6699CC", "#303f9f")
                             this.setState({
+                                selectedDocumentID: docID,
                                 currentDocument: text,
                                 resultsWidth: 'col-lg-4',
                                 documentWidth: 'col-lg-4'
@@ -102,8 +112,21 @@ class LoadDocuments extends React.Component {
             )
     }
 
+    closeSideWindow(event) {
+        event.preventDefault();
+        this.setState({
+            selectedDocumentID: -1,
+            currentDocument: "",
+            resultsWidth: 'col-lg-8',
+            documentWidth: 'hidden-lg'
+        });
+    }
+
     openJSON(event) {
         event.preventDefault();
+        this.setState({
+            selectedDocumentID: -1
+        });
         let docId = event.currentTarget.getAttribute("data-doc-id");
         fetch(Urls.OPEN_DOCUMENT, {
             method: 'post',
@@ -117,6 +140,7 @@ class LoadDocuments extends React.Component {
                         result.json().then((json) => {
                             let formattedJSON = '<pre>' + JSON.stringify(json, null, 2) + '</pre>';
                             this.setState({
+                                selectedDocumentID: docId,
                                 currentDocument: formattedJSON,
                                 resultsWidth: 'col-lg-4',
                                 documentWidth: 'col-lg-4'
@@ -132,6 +156,13 @@ class LoadDocuments extends React.Component {
                     });
                 }
             )
+    }
+
+    debugChanged(event) {
+        this.setState({
+            debug: event.target.value === "on"
+        });
+        event.preventDefault();
     }
 
     handleSubmit(event) {
@@ -288,7 +319,7 @@ class LoadDocuments extends React.Component {
         this.loadList(this.state.loadedDocumentsCount);
     }
 
-    loadList(startKCNum, exportDoc=false) {
+    loadList(startKCNum, exportDoc = false) {
         if (startKCNum === 0 && exportDoc === false) {
             this.setState({
                 loadedDocumentsCount: 1
@@ -307,13 +338,13 @@ class LoadDocuments extends React.Component {
             "DT_REFERENCE_1": "8",
             "DT_KNOWNERROR_1": "7",
             "DT_PROBLEMSOLUTION_1": "6",
-            "DT_Case" : "-1",
-            "DT_SMART_1" : "-1",
-            "DT_Topic" : "-1",
-            "DT_Insight" : "-1",
-            "DT_IQR_1" : "-1",
-            "DT_Article" : "-1",
-            "DT_QU_1" : "-1",
+            "DT_Case": "-1",
+            "DT_SMART_1": "-1",
+            "DT_Topic": "-1",
+            "DT_Insight": "-1",
+            "DT_IQR_1": "-1",
+            "DT_Article": "-1",
+            "DT_QU_1": "-1",
         };
         //TODO Need to remove this hardCoding
         let constraintChildren = [
@@ -355,14 +386,15 @@ class LoadDocuments extends React.Component {
                     "entitlements": this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root",
                     "segments": this.state.checkedEnterpriseSegments.length > 0 ? this.state.checkedEnterpriseSegments.join(",") : null,
                     "products": this.state.checkedProducts.length > 0 ? this.state.checkedProducts.map(chip => this.state.productsMap[chip]).join(",") : null,
-                    "numKCs": exportDoc ? 500: 30,
+                    "numKCs": exportDoc ? 500 : 30,
                     "startKCNum": startKCNum,
                     "constraints": {
                         "operation": "And",
                         "children": constraintChildren
                     }
                 },
-                "export" : exportDoc
+                "export": exportDoc,
+                "debug": this.state.debug
             })
         })
             .then(
@@ -384,6 +416,15 @@ class LoadDocuments extends React.Component {
                                 listItems: this.state.listItems.concat(result.hits),
                                 loadedDocumentsCount: this.state.loadedDocumentsCount + result.hits.length
                             });
+                            if (this.state.debug) {
+                                let formattedJSON = '<pre style="font-size: 11px">' + JSON.stringify({"query": result.query}, null, 2) + '</pre>';
+                                this.setState({
+                                    selectedDocumentID: -1,
+                                    currentDocument: formattedJSON,
+                                    resultsWidth: 'col-lg-4',
+                                    documentWidth: 'col-lg-4'
+                                })
+                            }
                         });
                     } else {
                         this.setState({
@@ -416,7 +457,8 @@ class LoadDocuments extends React.Component {
             searchDisplayQuery,
             resultsWidth,
             documentWidth,
-            currentDocument
+            currentDocument,
+            selectedDocumentID
         } = this.state;
 
         const searchHitsStyle = {
@@ -443,10 +485,24 @@ class LoadDocuments extends React.Component {
             padding: '0px 5px',
             cursor: 'pointer'
         }
+        const selectedDocumentStyle = {
+            textAlign: 'left',
+            verticalAlign: 'top',
+            border: '2px solid #303f9f',
+            padding: '2px'
+        };
         const documentStyle = {
             textAlign: 'left',
-            verticalAlign: 'top'
+            verticalAlign: 'top',
+            border: '2px solid white',
+            padding: '2px'
         };
+
+        const selectedDocumentHrStyle = {
+            color: 'white'
+        };
+        const documentHrStyle = {};
+
         const searchResultsStyle = {
             textAlign: 'left',
             margin: '2px',
@@ -547,11 +603,11 @@ class LoadDocuments extends React.Component {
                                    autoComplete="off"
                                    id="search"/>
                             <Button type="submit" onClick={this.handleSubmit}
-                                    className="mt-2 btn" style={submitBtnStyle}>Search</Button>
-                            &nbsp;
-                            &nbsp;
+                                    className="mt-2 btn"
+                                    style={submitBtnStyle}>Search</Button>&nbsp;&nbsp;
                             <Button type="button" onClick={this.handleExport}
-                                    className="mt-2 btn btn-secondary" >Export</Button>
+                                    className="mt-2 btn btn-secondary">Export</Button>&nbsp;&nbsp;
+                            <FormCheck name="Debug" title="Debug" onChange={this.debugChanged} label="Show Opensearch Query"/>
                         </form>
                     </div>
 
@@ -560,13 +616,15 @@ class LoadDocuments extends React.Component {
                     <pre
                         style={searchHitsStyle}
                         className="">{totalHits != null ? (searchDisplayQuery + totalHits + " results") : ""}</pre>
+                    <hr className="my-1"/>
                     {(listItems != null && listItems.length > 0) ? listItems.map(item => (
 
-                        <div key={item.ID} style={documentStyle}>
-                            <hr className="my-1"/>
+                        <div key={item.ID}
+                             style={item.ID === selectedDocumentID ? selectedDocumentStyle : documentStyle}>
                             <div className="row">
                                 <div className="col-lg-11">
-                                    <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}>
+                                    <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}
+                                       data-doc-id={item.ID}>
                                         <div style={headingStyle}>
                             <span
                                 style={idStyle}>{item.KCEXTERNALID}</span> <span
@@ -575,7 +633,8 @@ class LoadDocuments extends React.Component {
                                         </div>
                                     </a></div>
                                 <div className="col-lg-1" style={iconsStyle}><a onClick={this.openJSON}
-                                                                                data-doc-id={item.ID}><img src="img/knowledge.png" height="20px"/>
+                                                                                data-doc-id={item.ID}><img
+                                    src="img/knowledge.png" height="20px"/>
                                 </a></div>
                             </div>
 
@@ -583,6 +642,8 @@ class LoadDocuments extends React.Component {
                                 style={descriptionStyle}> <span
                                 dangerouslySetInnerHTML={{__html: item.CONTENT}}/> <span
                                 dangerouslySetInnerHTML={{__html: item.CONTENT_JPN_JP}}/></div>
+                            <hr className="my-1"
+                                style={item.ID === selectedDocumentID ? selectedDocumentHrStyle : documentHrStyle}/>
 
                         </div>
                     )) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
@@ -590,7 +651,10 @@ class LoadDocuments extends React.Component {
                         <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}
                 </div>
                 <div style={documentViewStyle} className={documentWidth}
-                     dangerouslySetInnerHTML={{__html: currentDocument}}>
+                >
+                    <a onClick={this.closeSideWindow}><img
+                        src="img/delete.gif" height="20px"/></a>
+                    <div dangerouslySetInnerHTML={{__html: currentDocument}}/>
                 </div>
             </div>
         );
