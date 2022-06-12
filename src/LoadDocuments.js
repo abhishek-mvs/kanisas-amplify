@@ -44,6 +44,7 @@ class LoadDocuments extends React.Component {
         this.loadList = this.loadList.bind(this);
         this.loadMore = this.loadMore.bind(this);
         this.openDocument = this.openDocument.bind(this);
+        this.openJSON = this.openJSON.bind(this);
         this.onProductsChange = this.onProductsChange.bind(this);
         this.handleDocumentTypeChange = this.handleDocumentTypeChange.bind(this);
         this.handleLanguageChange = this.handleLanguageChange.bind(this);
@@ -99,6 +100,38 @@ class LoadDocuments extends React.Component {
             )
     }
 
+    openJSON(event) {
+        event.preventDefault();
+        let docId = event.currentTarget.getAttribute("data-doc-id");
+        fetch(Urls.OPEN_DOCUMENT, {
+            method: 'post',
+            body: JSON.stringify({
+                "docId": docId
+            })
+        })
+            .then(
+                (result) => {
+                    if (result.status === 200) {
+                        result.json().then((json) => {
+                            let formattedJSON = '<pre>' + JSON.stringify(json, null, 2) + '</pre>';
+                            this.setState({
+                                currentDocument: formattedJSON,
+                                resultsWidth: 'col-lg-4',
+                                documentWidth: 'col-lg-4'
+                            })
+                        });
+                    }
+                }, (error) => {
+                    this.setState({
+                        currentDocument: "",
+                        resultsWidth: 'col-lg-8',
+                        documentWidth: 'hidden-lg',
+                        error
+                    });
+                }
+            )
+    }
+
     handleSubmit(event) {
         this.loadList(0);
         event.preventDefault();
@@ -124,7 +157,8 @@ class LoadDocuments extends React.Component {
                                     value: concept.id,
                                     label: concept.names['LA_eng_US'].replace(/(.{15})..+/, "$1..")
                                 };
-                            })
+                            });
+                            nodesTemp.sort(this.sortNames);
                             this.setState({
                                 entitlementNodes: [{
                                     value: 'Entitlements',
@@ -141,6 +175,20 @@ class LoadDocuments extends React.Component {
                 }
             )
     }
+
+    sortNames(a, b) {
+        const nameA = a.label.toUpperCase();
+        const nameB = b.label.toUpperCase();
+        if (nameA < nameB) {
+            return -1;
+        }
+        if (nameA > nameB) {
+            return 1;
+        }
+
+        // names must be equal
+        return 0;
+    };
 
     loadEnterpriseSegments() {
         fetch(Urls.GET_TAXONOMIES + "action=getEnterpriseSegments", {
@@ -173,6 +221,7 @@ class LoadDocuments extends React.Component {
                                     label: concept.names['LA_eng_US']
                                 };
                             })
+                            nodesTemp.sort(this.sortNames);
                             this.setState({
                                 documentTypes: nodesTemp
                             });
@@ -196,6 +245,7 @@ class LoadDocuments extends React.Component {
                                     label: concept.names['LA_eng_US']
                                 };
                             })
+                            nodesTemp.sort(this.sortNames)
                             this.setState({
                                 languages: nodesTemp
                             });
@@ -250,7 +300,14 @@ class LoadDocuments extends React.Component {
             "DT_HOWTO_1": "9",
             "DT_REFERENCE_1": "8",
             "DT_KNOWNERROR_1": "7",
-            "DT_PROBLEMSOLUTION_1": "6"
+            "DT_PROBLEMSOLUTION_1": "6",
+            "DT_Case" : "-1",
+            "DT_SMART_1" : "-1",
+            "DT_Topic" : "-1",
+            "DT_Insight" : "-1",
+            "DT_IQR_1" : "-1",
+            "DT_Article" : "-1",
+            "DT_QU_1" : "-1",
         };
         //TODO Need to remove this hardCoding
         let constraintChildren = [
@@ -276,7 +333,7 @@ class LoadDocuments extends React.Component {
                 ]
             }
         ];
-        if (this.state.selectedDocumentType !== '' && documentIdMap[this.state.selectedDocumentType] !== null) {
+        if (this.state.selectedDocumentType !== '' && this.state.selectedDocumentType !== '' && documentIdMap[this.state.selectedDocumentType] !== null && documentIdMap[this.state.selectedDocumentType] !== undefined) {
             constraintChildren = constraintChildren.concat({
                 "operation": "Equal",
                 "attributeType": "integer",
@@ -366,6 +423,10 @@ class LoadDocuments extends React.Component {
             verticalAlign: 'top',
             height: '100%'
         };
+        const iconsStyle = {
+            padding: '0px 5px',
+            cursor: 'pointer'
+        }
         const documentStyle = {
             textAlign: 'left',
             verticalAlign: 'top'
@@ -385,6 +446,7 @@ class LoadDocuments extends React.Component {
         };
 
         const headingStyle = {
+            cursor: 'pointer',
             margin: '0px',
             fontSize: '14px'
         }
@@ -480,22 +542,31 @@ class LoadDocuments extends React.Component {
                         style={searchHitsStyle}
                         className="">{totalHits != null ? (searchDisplayQuery + totalHits + " results") : ""}</pre>
                     {(listItems != null && listItems.length > 0) ? listItems.map(item => (
-                        <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}>
-                            <div key={item.ID} style={documentStyle}>
-                                <hr className="my-1"/>
-                                <div style={headingStyle}>
+
+                        <div key={item.ID} style={documentStyle}>
+                            <hr className="my-1"/>
+                            <div className="row">
+                                <div className="col-lg-11">
+                                    <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}>
+                                        <div style={headingStyle}>
                             <span
                                 style={idStyle}>{item.KCEXTERNALID}</span> <span
-                                    dangerouslySetInnerHTML={{__html: item.KCTITLE}}/> <span
-                                    dangerouslySetInnerHTML={{__html: item.KCTITLE_JPN_JP}}/>
-                                </div>
-                                <div
-                                    style={descriptionStyle}> <span
-                                    dangerouslySetInnerHTML={{__html: item.CONTENT}}/> <span
-                                    dangerouslySetInnerHTML={{__html: item.CONTENT_JPN_JP}}/></div>
-
+                                            dangerouslySetInnerHTML={{__html: item.KCTITLE}}/> <span
+                                            dangerouslySetInnerHTML={{__html: item.KCTITLE_JPN_JP}}/>
+                                        </div>
+                                    </a></div>
+                                <div className="col-lg-1" style={iconsStyle}><a onClick={this.openJSON}
+                                                                                data-doc-id={item.ID}><img src="img/knowledge.png" height="20px"/>
+                                </a></div>
                             </div>
-                        </a>)) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
+
+                            <div
+                                style={descriptionStyle}> <span
+                                dangerouslySetInnerHTML={{__html: item.CONTENT}}/> <span
+                                dangerouslySetInnerHTML={{__html: item.CONTENT_JPN_JP}}/></div>
+
+                        </div>
+                    )) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
                     {totalHits > loadedDocumentsCount ?
                         <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}
                 </div>
