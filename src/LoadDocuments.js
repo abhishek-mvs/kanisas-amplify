@@ -13,7 +13,7 @@ class LoadDocuments extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            checkedEntitlements: ['SAL_root', 'SAL_BTPUBLIC_1'],
+            checkedEntitlements: [],
             expandedEntitlements: ['Entitlements'],
             entitlementNodes: [],
             checkedEnterpriseSegments: [],
@@ -38,7 +38,7 @@ class LoadDocuments extends React.Component {
             selectedLanguage: 'LA_eng_US',
             searchDisplayQuery: null,
             resultsWidth: 'col-lg-8',
-            documentWidth: 'hidden-lg',
+            documentWidth: 'd-none',
             currentDocument: null,
             selectedDocumentID: -1,
             debug: false
@@ -105,7 +105,7 @@ class LoadDocuments extends React.Component {
                     this.setState({
                         currentDocument: "",
                         resultsWidth: 'col-lg-8',
-                        documentWidth: 'hidden-lg',
+                        documentWidth: 'd-none',
                         error
                     });
                 }
@@ -195,8 +195,10 @@ class LoadDocuments extends React.Component {
                                     label: concept.names['LA_eng_US'].replace(/(.{15})..+/, "$1..")
                                 };
                             });
+                            let checkedEntitlements = result.map(concept => concept.id);
                             nodesTemp.sort(this.sortNames);
                             this.setState({
+                                checkedEntitlements: checkedEntitlements,
                                 entitlementNodes: [{
                                     value: 'Entitlements',
                                     label: 'Entitlements', children: nodesTemp
@@ -479,6 +481,7 @@ class LoadDocuments extends React.Component {
             padding: '5px',
             backgroundColor: '#eeeeee',
             verticalAlign: 'top',
+            fontSize: '14px',
             height: '100%'
         };
         const iconsStyle = {
@@ -541,120 +544,125 @@ class LoadDocuments extends React.Component {
 
 
         return (
-            <div className="row no-gutters">
-                <div style={searchControlsStyle} className="col-lg-3">
-                    <div className="container">
-                        Language
-                        <div
-                            className="border rounded">
-                            <Dropdown value="English"
-                                      options={this.state.languages}
-                                      onChange={this.handleLanguageChange}
-                            />
+            <div className="container-fluid">
+                <div className="row p-0">
+                    <div style={searchControlsStyle} className="col-lg-3">
+                        <div className="container p-0">
+                            Language
+                            <div
+                                className="border rounded">
+                                <Dropdown value="English"
+                                          options={this.state.languages}
+                                          onChange={this.handleLanguageChange}
+                                />
+                            </div>
+                            Entitlements
+                            <div style={entitlementStyle}
+                                 className="border rounded">
+                                <CheckboxTree
+                                    iconsClass="fa5"
+                                    showNodeIcon={false}
+                                    nodes={this.state.entitlementNodes}
+                                    checked={this.state.checkedEntitlements}
+                                    expanded={this.state.expandedEntitlements}
+                                    onCheck={checked => this.setState({checkedEntitlements: checked})}
+                                    onExpand={expanded => this.setState({expandedEntitlements: expanded})}
+                                />
+                            </div>
+                            Segments
+                            <div style={entitlementStyle}
+                                 className="border rounded">
+                                <CheckboxTree
+                                    iconsClass="fa5"
+                                    showNodeIcon={false}
+                                    nodes={this.state.enterpriseSegmentsNodes}
+                                    checked={this.state.checkedEnterpriseSegments}
+                                    expanded={this.state.expandedEnterpriseSegments}
+                                    onCheck={checked => this.setState({checkedEnterpriseSegments: checked})}
+                                    onExpand={expanded => this.setState({expandedEnterpriseSegments: expanded})}
+                                />
+                            </div>
+                            Document Type
+                            <div
+                                className="border rounded">
+                                <Dropdown
+                                    options={this.state.documentTypes}
+                                    onChange={this.handleDocumentTypeChange}
+                                />
+                            </div>
+                            Products
+                            <div style={chipsStyle}>
+                                <Chips
+                                    value={this.state.checkedProducts}
+                                    onChange={this.onProductsChange}
+                                    suggestions={this.state.productNodes}
+                                    className="form-control form-control-lg"
+                                    fromSuggestionsOnly={true}
+                                /></div>
+                            <form onSubmit={this.handleSubmit}>
+                                <label htmlFor="search">Keywords</label>
+                                <input type="text" value={this.state.searchString}
+                                       onChange={this.handleSearchChange}
+                                       className="form-control"
+                                       autoComplete="off"
+                                       id="search"/>
+                                <Button type="submit" onClick={this.handleSubmit}
+                                        className="mt-2 btn"
+                                        style={submitBtnStyle}>Search</Button>&nbsp;&nbsp;
+                                <Button type="button" onClick={this.handleExport}
+                                        className="mt-2 btn btn-secondary">Export</Button>&nbsp;&nbsp;
+                                <FormCheck name="Debug" title="Debug" onChange={this.debugChanged}
+                                           label="Show Opensearch Query"/>
+                            </form>
                         </div>
-                        Entitlements
-                        <div style={entitlementStyle}
-                             className="border rounded">
-                            <CheckboxTree
-                                iconsClass="fa5"
-                                showNodeIcon={false}
-                                nodes={this.state.entitlementNodes}
-                                checked={this.state.checkedEntitlements}
-                                expanded={this.state.expandedEntitlements}
-                                onCheck={checked => this.setState({checkedEntitlements: checked})}
-                                onExpand={expanded => this.setState({expandedEntitlements: expanded})}
-                            />
-                        </div>
-                        Segments
-                        <div style={entitlementStyle}
-                             className="border rounded">
-                            <CheckboxTree
-                                iconsClass="fa5"
-                                showNodeIcon={false}
-                                nodes={this.state.enterpriseSegmentsNodes}
-                                checked={this.state.checkedEnterpriseSegments}
-                                expanded={this.state.expandedEnterpriseSegments}
-                                onCheck={checked => this.setState({checkedEnterpriseSegments: checked})}
-                                onExpand={expanded => this.setState({expandedEnterpriseSegments: expanded})}
-                            />
-                        </div>
-                        Document Type
-                        <div
-                            className="border rounded">
-                            <Dropdown
-                                options={this.state.documentTypes}
-                                onChange={this.handleDocumentTypeChange}
-                            />
-                        </div>
-                        Products
-                        <div style={chipsStyle}>
-                            <Chips
-                                value={this.state.checkedProducts}
-                                onChange={this.onProductsChange}
-                                suggestions={this.state.productNodes}
-                                className="form-control form-control-lg"
-                                fromSuggestionsOnly={true}
-                            /></div>
-                        <form onSubmit={this.handleSubmit}>
-                            <label htmlFor="search">Keywords</label>
-                            <input type="text" value={this.state.searchString}
-                                   onChange={this.handleSearchChange}
-                                   className="form-control"
-                                   autoComplete="off"
-                                   id="search"/>
-                            <Button type="submit" onClick={this.handleSubmit}
-                                    className="mt-2 btn"
-                                    style={submitBtnStyle}>Search</Button>&nbsp;&nbsp;
-                            <Button type="button" onClick={this.handleExport}
-                                    className="mt-2 btn btn-secondary">Export</Button>&nbsp;&nbsp;
-                            <FormCheck name="Debug" title="Debug" onChange={this.debugChanged} label="Show Opensearch Query"/>
-                        </form>
-                    </div>
 
-                </div>
-                <div style={searchResultsStyle} className={resultsWidth}>
+                    </div>
+                    <div style={searchResultsStyle} className={resultsWidth}>
                     <pre
                         style={searchHitsStyle}
                         className="">{totalHits != null ? (searchDisplayQuery + totalHits + " results") : ""}</pre>
-                    <hr className="my-1"/>
-                    {(listItems != null && listItems.length > 0) ? listItems.map(item => (
+                        <hr className="my-1"/>
+                        {(listItems != null && listItems.length > 0) ? listItems.map(item => (
 
-                        <div key={item.ID}
-                             style={item.ID === selectedDocumentID ? selectedDocumentStyle : documentStyle}>
-                            <div className="row">
-                                <div className="col-lg-11">
-                                    <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}
-                                       data-doc-id={item.ID}>
-                                        <div style={headingStyle}>
+                            <div key={item.ID}
+                                 style={item.ID === selectedDocumentID ? selectedDocumentStyle : documentStyle}>
+                                <div className="container p-0">
+                                    <div className="row">
+                                        <div className="col-lg-11">
+                                            <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}
+                                               data-doc-id={item.ID}>
+                                                <div style={headingStyle}>
                             <span
                                 style={idStyle}>{item.KCEXTERNALID}</span> <span
-                                            dangerouslySetInnerHTML={{__html: item.KCTITLE}}/> <span
-                                            dangerouslySetInnerHTML={{__html: item.KCTITLE_JPN_JP}}/>
-                                        </div>
-                                    </a></div>
-                                <div className="col-lg-1" style={iconsStyle}><a onClick={this.openJSON}
-                                                                                data-doc-id={item.ID}><img
-                                    src="img/knowledge.png" height="20px"/>
-                                </a></div>
+                                                    dangerouslySetInnerHTML={{__html: item.KCTITLE}}/> <span
+                                                    dangerouslySetInnerHTML={{__html: item.KCTITLE_JPN_JP}}/>
+                                                </div>
+                                            </a></div>
+                                        <div className="col-lg-1" style={iconsStyle}><a onClick={this.openJSON}
+                                                                                        data-doc-id={item.ID}><img
+                                            src="img/knowledge.png" height="20px"/>
+                                        </a></div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    style={descriptionStyle}> <span
+                                    dangerouslySetInnerHTML={{__html: item.CONTENT}}/> <span
+                                    dangerouslySetInnerHTML={{__html: item.CONTENT_JPN_JP}}/></div>
+                                <hr className="my-1"
+                                    style={item.ID === selectedDocumentID ? selectedDocumentHrStyle : documentHrStyle}/>
+
                             </div>
-
-                            <div
-                                style={descriptionStyle}> <span
-                                dangerouslySetInnerHTML={{__html: item.CONTENT}}/> <span
-                                dangerouslySetInnerHTML={{__html: item.CONTENT_JPN_JP}}/></div>
-                            <hr className="my-1"
-                                style={item.ID === selectedDocumentID ? selectedDocumentHrStyle : documentHrStyle}/>
-
-                        </div>
-                    )) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
-                    {totalHits > loadedDocumentsCount ?
-                        <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}
-                </div>
-                <div style={documentViewStyle} className={documentWidth}
-                >
-                    <a onClick={this.closeSideWindow}><img
-                        src="img/delete.gif" height="20px"/></a>
-                    <div dangerouslySetInnerHTML={{__html: currentDocument}}/>
+                        )) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
+                        {totalHits > loadedDocumentsCount ?
+                            <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}
+                    </div>
+                    <div style={documentViewStyle} className={documentWidth}
+                    >
+                        <a onClick={this.closeSideWindow}><img
+                            src="img/delete.gif" height="20px"/></a>
+                        <div dangerouslySetInnerHTML={{__html: currentDocument}}/>
+                    </div>
                 </div>
             </div>
         );

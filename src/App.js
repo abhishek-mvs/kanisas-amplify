@@ -4,9 +4,7 @@ import LoadDocuments from './LoadDocuments';
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
         <LoadDocuments/>
-      </header>
     </div>
   );
 }
