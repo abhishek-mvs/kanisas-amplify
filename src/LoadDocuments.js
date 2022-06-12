@@ -5,6 +5,7 @@ import Chips from 'react-chips'
 import Urls from './Urls'
 import Dropdown from 'react-dropdown';
 import 'react-dropdown/style.css';
+import { saveAs } from 'file-saver';
 
 
 class LoadDocuments extends React.Component {
@@ -41,6 +42,7 @@ class LoadDocuments extends React.Component {
         };
         this.handleSearchChange = this.handleSearchChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
+        this.handleExport = this.handleExport.bind(this);
         this.loadList = this.loadList.bind(this);
         this.loadMore = this.loadMore.bind(this);
         this.openDocument = this.openDocument.bind(this);
@@ -137,6 +139,10 @@ class LoadDocuments extends React.Component {
         event.preventDefault();
     }
 
+    handleExport(event) {
+        this.loadList(0, true);
+        event.preventDefault();
+    }
 
     componentDidMount() {
         this.loadEntitlements();
@@ -282,8 +288,8 @@ class LoadDocuments extends React.Component {
         this.loadList(this.state.loadedDocumentsCount);
     }
 
-    loadList(startKCNum) {
-        if (startKCNum === 0) {
+    loadList(startKCNum, exportDoc=false) {
+        if (startKCNum === 0 && exportDoc === false) {
             this.setState({
                 loadedDocumentsCount: 1
             })
@@ -349,17 +355,27 @@ class LoadDocuments extends React.Component {
                     "entitlements": this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root",
                     "segments": this.state.checkedEnterpriseSegments.length > 0 ? this.state.checkedEnterpriseSegments.join(",") : null,
                     "products": this.state.checkedProducts.length > 0 ? this.state.checkedProducts.map(chip => this.state.productsMap[chip]).join(",") : null,
-                    "numKCs": 30,
+                    "numKCs": exportDoc ? 500: 30,
                     "startKCNum": startKCNum,
                     "constraints": {
                         "operation": "And",
                         "children": constraintChildren
                     }
-                }
+                },
+                "export" : exportDoc
             })
         })
             .then(
                 (result) => {
+                    if (exportDoc) {
+                        if (result.status === 200) {
+                            result.text().then((text) => {
+                                var blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+                                saveAs(blob, "export.csv");
+                            });
+                        }
+                        return;
+                    }
                     if (result.status === 200) {
                         result.json().then(result => {
                             this.setState({
@@ -532,7 +548,10 @@ class LoadDocuments extends React.Component {
                                    id="search"/>
                             <Button type="submit" onClick={this.handleSubmit}
                                     className="mt-2 btn" style={submitBtnStyle}>Search</Button>
-
+                            &nbsp;
+                            &nbsp;
+                            <Button type="button" onClick={this.handleExport}
+                                    className="mt-2 btn btn-secondary" >Export</Button>
                         </form>
                     </div>
 
