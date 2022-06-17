@@ -20,6 +20,8 @@ class LoadDocuments extends React.Component {
             expandedEnterpriseSegments: [],
             enterpriseSegmentsNodes: [],
             documentTypes: [],
+            sortFieldsTypes: [],
+            sortOrderTypes: [],
             languages: [],
             checkedProducts: [],
             productsMap: {},
@@ -41,6 +43,8 @@ class LoadDocuments extends React.Component {
             documentWidth: 'd-none',
             currentDocument: null,
             selectedDocumentID: -1,
+            sortField: 'PUBLICATIONSTATUS',
+            sortOrder: 1,
             debug: false
         };
         this.handleSearchChange = this.handleSearchChange.bind(this);
@@ -54,6 +58,8 @@ class LoadDocuments extends React.Component {
         this.onProductsChange = this.onProductsChange.bind(this);
         this.handleDocumentTypeChange = this.handleDocumentTypeChange.bind(this);
         this.handleLanguageChange = this.handleLanguageChange.bind(this);
+        this.handleSortField = this.handleSortField.bind(this);
+        this.handleSortOrder = this.handleSortOrder.bind(this);
         this.debugChanged = this.debugChanged.bind(this);
     }
 
@@ -67,6 +73,14 @@ class LoadDocuments extends React.Component {
 
     handleDocumentTypeChange(event) {
         this.setState({selectedDocumentType: event.value})
+    }
+
+    handleSortField(event) {
+        this.setState({sortField: event.value})
+    }
+
+    handleSortOrder(event) {
+        this.setState({sortOrder: event.value})
     }
 
     handleSearchChange(event) {
@@ -208,6 +222,8 @@ class LoadDocuments extends React.Component {
                             this.loadEnterpriseSegments();
                             this.loadDocumentTypes();
                             this.loadLanguages();
+                            this.loadSortFieldsTypes();
+                            this.loadSortOrderTypes();
                             this.loadList(0);
                         });
                     }
@@ -292,6 +308,21 @@ class LoadDocuments extends React.Component {
                     }
                 }
             )
+    }
+
+    loadSortFieldsTypes() {
+        let sortFields = [];
+        sortFields = sortFields.concat({value: 'PUBLICATIONSTATUS', label: 'Publication Status'})
+        sortFields = sortFields.concat({value: 'DOCLASTMODIFIEDDATE', label: 'Last Modified'})
+        sortFields = sortFields.concat({value: 'RATINGCOUNT', label: 'Rating Count'})
+        this.setState({sortFieldsTypes: sortFields})
+    }
+
+    loadSortOrderTypes() {
+        let sortOrder = [];
+        sortOrder = sortOrder.concat({value: 1, label: 'asc'})
+        sortOrder = sortOrder.concat({value: 0, label: 'desc'})
+        this.setState({sortOrderTypes: sortOrder})
     }
 
     loadProducts() {
@@ -390,6 +421,8 @@ class LoadDocuments extends React.Component {
                     "products": this.state.checkedProducts.length > 0 ? this.state.checkedProducts.map(chip => this.state.productsMap[chip]).join(",") : null,
                     "numKCs": exportDoc ? 500 : 30,
                     "startKCNum": startKCNum,
+                    "sortField": this.state.sortField,
+                    "sortOrder": this.state.sortOrder,
                     "constraints": {
                         "operation": "And",
                         "children": constraintChildren
@@ -606,6 +639,24 @@ class LoadDocuments extends React.Component {
                                        className="form-control"
                                        autoComplete="off"
                                        id="search"/>
+                                <div className="container-fluid p-0">
+                                    <div className="row g-0">
+                                        <div className="col-md-9">
+                                            Sort By
+                                            <Dropdown value={"Publication Status"}
+                                                options={this.state.sortFieldsTypes}
+                                                onChange={this.handleSortField}>
+                                            </Dropdown>
+                                        </div>
+                                        <div className="col-md-3">
+                                            Order
+                                            <Dropdown value={"asc"}
+                                                options={this.state.sortOrderTypes}
+                                                onChange={this.handleSortOrder}
+                                            ></Dropdown>
+                                        </div>
+                                    </div>
+                                </div>
                                 <Button type="submit" onClick={this.handleSubmit}
                                         className="mt-2 btn"
                                         style={submitBtnStyle}>Search</Button>&nbsp;&nbsp;
