@@ -43,7 +43,7 @@ class LoadDocuments extends React.Component {
             documentWidth: 'd-none',
             currentDocument: null,
             selectedDocumentID: -1,
-            sortField: 'PUBLICATIONSTATUS',
+            sortField: '',
             sortOrder: 1,
             debug: false
         };
@@ -315,6 +315,7 @@ class LoadDocuments extends React.Component {
         sortFields = sortFields.concat({value: 'PUBLICATIONSTATUS', label: 'Publication Status'})
         sortFields = sortFields.concat({value: 'DOCLASTMODIFIEDDATE', label: 'Last Modified'})
         sortFields = sortFields.concat({value: 'RATINGCOUNT', label: 'Rating Count'})
+        sortFields = sortFields.concat({value: '', label: 'Score'})
         this.setState({sortFieldsTypes: sortFields})
     }
 
@@ -643,7 +644,7 @@ class LoadDocuments extends React.Component {
                                     <div className="row g-0">
                                         <div className="col-md-9">
                                             Sort By
-                                            <Dropdown value={"Publication Status"}
+                                            <Dropdown value={"Score"}
                                                 options={this.state.sortFieldsTypes}
                                                 onChange={this.handleSortField}>
                                             </Dropdown>
