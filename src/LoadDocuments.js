@@ -7,7 +7,14 @@ import Dropdown from 'react-dropdown';
 import 'react-dropdown/style.css';
 import {saveAs} from 'file-saver';
 import {FormCheck} from "react-bootstrap";
-
+import 'react-accessible-accordion/dist/fancy-example.css';
+import {
+    Accordion,
+    AccordionItem,
+    AccordionItemHeading,
+    AccordionItemButton,
+    AccordionItemPanel,
+} from 'react-accessible-accordion';
 
 class LoadDocuments extends React.Component {
     constructor(props) {
@@ -23,6 +30,9 @@ class LoadDocuments extends React.Component {
             sortFieldsTypes: [],
             sortOrderTypes: [],
             languages: [],
+            otherLanguages: [],
+            checkedOtherLanguages: [],
+            expandedOtherLanguages: [],
             checkedProducts: [],
             productsMap: {},
             productNodes: [],
@@ -304,6 +314,14 @@ class LoadDocuments extends React.Component {
                             this.setState({
                                 languages: nodesTemp
                             });
+                            this.setState(
+                                {
+                                    otherLanguages: [{
+                                        value: 'OtherLanguages',
+                                        label: 'Select Language', children: nodesTemp
+                                    }]
+                                }
+                            )
                         });
                     }
                 }
@@ -383,7 +401,7 @@ class LoadDocuments extends React.Component {
         //TODO Need to remove this hardCoding
         let constraintChildren = [
             {
-                "operation": "And", "children": [
+                "operation": "Or", "children": [
                     {
                         "operation": "Equal",
                         "attributeType": "integer",
@@ -411,6 +429,22 @@ class LoadDocuments extends React.Component {
                 "attributeName": "TEMPLATEID",
                 "value": documentIdMap[this.state.selectedDocumentType]
             });
+        }
+        if (this.state.checkedOtherLanguages.length > 0) {
+            let otherLanguagesChildren = [];
+            this.state.checkedOtherLanguages.forEach((language) => {
+                otherLanguagesChildren = otherLanguagesChildren.concat({
+                    "operation": "Contains",
+                    "attributeType": "text",
+                    "attributeName": "EDITIONSLANGS",
+                    "containsValue": "AllOf",
+                    "value": language
+                })
+            })
+            constraintChildren = constraintChildren.concat({
+                "operation": "Or", "children": otherLanguagesChildren
+            })
+            console.log(constraintChildren)
         }
         fetch(Urls.DOCUMENT_SEARCH, {
             method: 'post',
@@ -582,57 +616,90 @@ class LoadDocuments extends React.Component {
                 <div className="row p-0">
                     <div style={searchControlsStyle} className="col-lg-3">
                         <div className="container p-0">
-                            Language
-                            <div
-                                className="border rounded">
-                                <Dropdown value="English"
-                                          options={this.state.languages}
-                                          onChange={this.handleLanguageChange}
-                                />
-                            </div>
-                            Entitlements
-                            <div style={entitlementStyle}
-                                 className="border rounded">
-                                <CheckboxTree
-                                    iconsClass="fa5"
-                                    showNodeIcon={false}
-                                    nodes={this.state.entitlementNodes}
-                                    checked={this.state.checkedEntitlements}
-                                    expanded={this.state.expandedEntitlements}
-                                    onCheck={checked => this.setState({checkedEntitlements: checked})}
-                                    onExpand={expanded => this.setState({expandedEntitlements: expanded})}
-                                />
-                            </div>
-                            Segments
-                            <div style={entitlementStyle}
-                                 className="border rounded">
-                                <CheckboxTree
-                                    iconsClass="fa5"
-                                    showNodeIcon={false}
-                                    nodes={this.state.enterpriseSegmentsNodes}
-                                    checked={this.state.checkedEnterpriseSegments}
-                                    expanded={this.state.expandedEnterpriseSegments}
-                                    onCheck={checked => this.setState({checkedEnterpriseSegments: checked})}
-                                    onExpand={expanded => this.setState({expandedEnterpriseSegments: expanded})}
-                                />
-                            </div>
-                            Document Type
-                            <div
-                                className="border rounded">
-                                <Dropdown
-                                    options={this.state.documentTypes}
-                                    onChange={this.handleDocumentTypeChange}
-                                />
-                            </div>
-                            Products
-                            <div style={chipsStyle}>
-                                <Chips
-                                    value={this.state.checkedProducts}
-                                    onChange={this.onProductsChange}
-                                    suggestions={this.state.productNodes}
-                                    className="form-control form-control-lg"
-                                    fromSuggestionsOnly={true}
-                                /></div>
+                            <Accordion allowZeroExpanded={true} allowMultipleExpanded={true}>
+                                <AccordionItem>
+                                    <AccordionItemHeading>
+                                        <AccordionItemButton>
+                                            Languages
+                                        </AccordionItemButton>
+                                    </AccordionItemHeading>
+                                    <AccordionItemPanel>
+                                        Language
+                                        <div
+                                            className="border rounded">
+                                            <Dropdown value="English"
+                                                      options={this.state.languages}
+                                                      onChange={this.handleLanguageChange}
+                                            />
+                                        </div>
+                                        Other Languages
+                                        <div style={entitlementStyle}
+                                             className="border rounded">
+                                            <CheckboxTree
+                                                iconsClass="fa5"
+                                                showNodeIcon={false}
+                                                nodes={this.state.otherLanguages}
+                                                checked={this.state.checkedOtherLanguages}
+                                                expanded={this.state.expandedOtherLanguages}
+                                                onCheck={checked => this.setState({checkedOtherLanguages: checked})}
+                                                onExpand={expanded => this.setState({expandedOtherLanguages: expanded})}
+                                            />
+                                        </div>
+                                    </AccordionItemPanel>
+                                </AccordionItem>
+                                <AccordionItem>
+                                    <AccordionItemHeading>
+                                        <AccordionItemButton>
+                                            Other Options
+                                        </AccordionItemButton>
+                                    </AccordionItemHeading>
+                                    <AccordionItemPanel>
+                                        Entitlements
+                                        <div style={entitlementStyle}
+                                             className="border rounded">
+                                            <CheckboxTree
+                                                iconsClass="fa5"
+                                                showNodeIcon={false}
+                                                nodes={this.state.entitlementNodes}
+                                                checked={this.state.checkedEntitlements}
+                                                expanded={this.state.expandedEntitlements}
+                                                onCheck={checked => this.setState({checkedEntitlements: checked})}
+                                                onExpand={expanded => this.setState({expandedEntitlements: expanded})}
+                                            />
+                                        </div>
+                                        Segments
+                                        <div style={entitlementStyle}
+                                             className="border rounded">
+                                            <CheckboxTree
+                                                iconsClass="fa5"
+                                                showNodeIcon={false}
+                                                nodes={this.state.enterpriseSegmentsNodes}
+                                                checked={this.state.checkedEnterpriseSegments}
+                                                expanded={this.state.expandedEnterpriseSegments}
+                                                onCheck={checked => this.setState({checkedEnterpriseSegments: checked})}
+                                                onExpand={expanded => this.setState({expandedEnterpriseSegments: expanded})}
+                                            />
+                                        </div>
+                                        Document Type
+                                        <div
+                                            className="border rounded">
+                                            <Dropdown
+                                                options={this.state.documentTypes}
+                                                onChange={this.handleDocumentTypeChange}
+                                            />
+                                        </div>
+                                        Products
+                                        <div style={chipsStyle}>
+                                            <Chips
+                                                value={this.state.checkedProducts}
+                                                onChange={this.onProductsChange}
+                                                suggestions={this.state.productNodes}
+                                                className="form-control form-control-lg"
+                                                fromSuggestionsOnly={true}
+                                            /></div>
+                                    </AccordionItemPanel>
+                                </AccordionItem>
+                            </Accordion>
                             <form onSubmit={this.handleSubmit}>
                                 <label htmlFor="search">Keywords</label>
                                 <input type="text" value={this.state.searchString}
@@ -645,15 +712,15 @@ class LoadDocuments extends React.Component {
                                         <div className="col-md-9">
                                             Sort By
                                             <Dropdown value={"Score"}
-                                                options={this.state.sortFieldsTypes}
-                                                onChange={this.handleSortField}>
+                                                      options={this.state.sortFieldsTypes}
+                                                      onChange={this.handleSortField}>
                                             </Dropdown>
                                         </div>
                                         <div className="col-md-3">
                                             Order
                                             <Dropdown value={"asc"}
-                                                options={this.state.sortOrderTypes}
-                                                onChange={this.handleSortOrder}
+                                                      options={this.state.sortOrderTypes}
+                                                      onChange={this.handleSortOrder}
                                             ></Dropdown>
                                         </div>
                                     </div>
