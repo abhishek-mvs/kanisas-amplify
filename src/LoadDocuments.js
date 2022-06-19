@@ -7,12 +7,12 @@ import Dropdown from 'react-dropdown';
 import 'react-dropdown/style.css';
 import {saveAs} from 'file-saver';
 import {FormCheck} from "react-bootstrap";
-import 'react-accessible-accordion/dist/fancy-example.css';
+
 import {
     Accordion,
     AccordionItem,
-    AccordionItemHeading,
     AccordionItemButton,
+    AccordionItemHeading,
     AccordionItemPanel,
 } from 'react-accessible-accordion';
 
@@ -29,10 +29,14 @@ class LoadDocuments extends React.Component {
             documentTypes: [],
             sortFieldsTypes: [],
             sortOrderTypes: [],
-            languages: [],
-            otherLanguages: [],
-            checkedOtherLanguages: [],
-            expandedOtherLanguages: [],
+            languageSelectionTypes: [],
+            documentLanguages: [],
+            checkedDocumentLanguages: [],
+            expandedDocumentLanguages: [],
+            editionLanguages: [],
+            checkedEditionLanguages: [],
+            expandedEditionLanguages: [],
+
             checkedProducts: [],
             productsMap: {},
             productNodes: [],
@@ -47,7 +51,6 @@ class LoadDocuments extends React.Component {
             uniqueID: -1,
             searchString: '',
             selectedDocumentType: '',
-            selectedLanguage: 'LA_eng_US',
             searchDisplayQuery: null,
             resultsWidth: 'col-lg-8',
             documentWidth: 'd-none',
@@ -55,6 +58,7 @@ class LoadDocuments extends React.Component {
             selectedDocumentID: -1,
             sortField: '',
             sortOrder: 1,
+            languageSelectionType: 'All',
             debug: false
         };
         this.handleSearchChange = this.handleSearchChange.bind(this);
@@ -70,6 +74,7 @@ class LoadDocuments extends React.Component {
         this.handleLanguageChange = this.handleLanguageChange.bind(this);
         this.handleSortField = this.handleSortField.bind(this);
         this.handleSortOrder = this.handleSortOrder.bind(this);
+        this.handleLanguageSelectionType = this.handleLanguageSelectionType.bind(this);
         this.debugChanged = this.debugChanged.bind(this);
     }
 
@@ -91,6 +96,10 @@ class LoadDocuments extends React.Component {
 
     handleSortOrder(event) {
         this.setState({sortOrder: event.value})
+    }
+
+    handleLanguageSelectionType(event) {
+        this.setState({languageSelectionType: event.value})
     }
 
     handleSearchChange(event) {
@@ -234,6 +243,7 @@ class LoadDocuments extends React.Component {
                             this.loadLanguages();
                             this.loadSortFieldsTypes();
                             this.loadSortOrderTypes();
+                            this.loadLanguageSelectionTypes();
                             this.loadList(0);
                         });
                     }
@@ -311,13 +321,14 @@ class LoadDocuments extends React.Component {
                                 };
                             })
                             nodesTemp.sort(this.sortNames)
-                            this.setState({
-                                languages: nodesTemp
-                            });
                             this.setState(
                                 {
-                                    otherLanguages: [{
-                                        value: 'OtherLanguages',
+                                    documentLanguages: [{
+                                        value: 'documentLanguages',
+                                        label: 'Select Language', children: nodesTemp
+                                    }],
+                                    editionLanguages: [{
+                                        value: 'editionLanguages',
                                         label: 'Select Language', children: nodesTemp
                                     }]
                                 }
@@ -338,10 +349,16 @@ class LoadDocuments extends React.Component {
     }
 
     loadSortOrderTypes() {
-        let sortOrder = [];
-        sortOrder = sortOrder.concat({value: 1, label: 'asc'})
-        sortOrder = sortOrder.concat({value: 0, label: 'desc'})
-        this.setState({sortOrderTypes: sortOrder})
+        this.setState({sortOrderTypes: [{value: 1, label: 'asc'}, {value: 0, label: 'desc'}]})
+    }
+
+    loadLanguageSelectionTypes() {
+        this.setState({
+            languageSelectionTypes: [{value: 'All', label: 'All languages'}, {
+                value: 'Selected',
+                label: 'Selected languages below'
+            }, {value: 'Query', label: 'By determining query language'}]
+        })
     }
 
     loadProducts() {
@@ -372,6 +389,16 @@ class LoadDocuments extends React.Component {
     }
 
     loadList(startKCNum, exportDoc = false) {
+        if (this.state.languageSelectionType === 'Query' && this.state.searchString.trim().length === 0) {
+            alert("Please enter a query for searching.");
+            return;
+        }
+
+        if (this.state.languageSelectionType === 'Selected' && this.state.checkedDocumentLanguages.length === 0) {
+            alert("Please choose at least one language.");
+            return;
+        }
+
         if (startKCNum === 0 && exportDoc === false) {
             this.setState({
                 loadedDocumentsCount: 1
@@ -415,11 +442,6 @@ class LoadDocuments extends React.Component {
                         "value": "125"
                     }
                 ]
-            },
-            {
-                "operation": "Or", "children": [
-                    {"operation": "Under", "nodeId": this.state.selectedLanguage}
-                ]
             }
         ];
         if (this.state.selectedDocumentType !== '' && this.state.selectedDocumentType !== '' && documentIdMap[this.state.selectedDocumentType] !== null && documentIdMap[this.state.selectedDocumentType] !== undefined) {
@@ -430,10 +452,10 @@ class LoadDocuments extends React.Component {
                 "value": documentIdMap[this.state.selectedDocumentType]
             });
         }
-        if (this.state.checkedOtherLanguages.length > 0) {
-            let otherLanguagesChildren = [];
-            this.state.checkedOtherLanguages.forEach((language) => {
-                otherLanguagesChildren = otherLanguagesChildren.concat({
+        if (this.state.checkedEditionLanguages.length > 0) {
+            let editionLanguagesChildren = [];
+            this.state.checkedEditionLanguages.forEach((language) => {
+                editionLanguagesChildren = editionLanguagesChildren.concat({
                     "operation": "Contains",
                     "attributeType": "text",
                     "attributeName": "EDITIONSLANGS",
@@ -442,7 +464,7 @@ class LoadDocuments extends React.Component {
                 })
             })
             constraintChildren = constraintChildren.concat({
-                "operation": "Or", "children": otherLanguagesChildren
+                "operation": "Or", "children": editionLanguagesChildren
             })
             console.log(constraintChildren)
         }
@@ -458,6 +480,8 @@ class LoadDocuments extends React.Component {
                     "startKCNum": startKCNum,
                     "sortField": this.state.sortField,
                     "sortOrder": this.state.sortOrder,
+                    "languageSelectionType": this.state.languageSelectionType,
+                    "selectedLanguages": this.state.checkedDocumentLanguages.length > 0 ? this.state.checkedDocumentLanguages.join(",") : "",
                     "constraints": {
                         "operation": "And",
                         "children": constraintChildren
@@ -624,25 +648,35 @@ class LoadDocuments extends React.Component {
                                         </AccordionItemButton>
                                     </AccordionItemHeading>
                                     <AccordionItemPanel>
-                                        Language
-                                        <div
-                                            className="border rounded">
-                                            <Dropdown value="English"
-                                                      options={this.state.languages}
-                                                      onChange={this.handleLanguageChange}
-                                            />
-                                        </div>
-                                        Other Languages
+                                        Search from 
+                                        <Dropdown value={"All languages"}
+                                                  options={this.state.languageSelectionTypes}
+                                                  onChange={this.handleLanguageSelectionType}
+                                        ></Dropdown>
+                                        Select Languages
                                         <div style={entitlementStyle}
                                              className="border rounded">
                                             <CheckboxTree
                                                 iconsClass="fa5"
                                                 showNodeIcon={false}
-                                                nodes={this.state.otherLanguages}
-                                                checked={this.state.checkedOtherLanguages}
-                                                expanded={this.state.expandedOtherLanguages}
-                                                onCheck={checked => this.setState({checkedOtherLanguages: checked})}
-                                                onExpand={expanded => this.setState({expandedOtherLanguages: expanded})}
+                                                nodes={this.state.documentLanguages}
+                                                checked={this.state.checkedDocumentLanguages}
+                                                expanded={this.state.expandedDocumentLanguages}
+                                                onCheck={checked => this.setState({checkedDocumentLanguages: checked})}
+                                                onExpand={expanded => this.setState({expandedDocumentLanguages: expanded})}
+                                            />
+                                        </div>
+                                        Edition Languages
+                                        <div style={entitlementStyle}
+                                             className="border rounded">
+                                            <CheckboxTree
+                                                iconsClass="fa5"
+                                                showNodeIcon={false}
+                                                nodes={this.state.editionLanguages}
+                                                checked={this.state.checkedEditionLanguages}
+                                                expanded={this.state.expandedEditionLanguages}
+                                                onCheck={checked => this.setState({checkedEditionLanguages: checked})}
+                                                onExpand={expanded => this.setState({expandedEditionLanguages: expanded})}
                                             />
                                         </div>
                                     </AccordionItemPanel>
@@ -650,7 +684,7 @@ class LoadDocuments extends React.Component {
                                 <AccordionItem>
                                     <AccordionItemHeading>
                                         <AccordionItemButton>
-                                            Other Options
+                                            Segment Metadata
                                         </AccordionItemButton>
                                     </AccordionItemHeading>
                                     <AccordionItemPanel>
@@ -753,8 +787,7 @@ class LoadDocuments extends React.Component {
                                                 <div style={headingStyle}>
                             <span
                                 style={idStyle}>{item.KCEXTERNALID}</span> <span
-                                                    dangerouslySetInnerHTML={{__html: item.KCTITLE}}/> <span
-                                                    dangerouslySetInnerHTML={{__html: item.KCTITLE_JPN_JP}}/>
+                                                    dangerouslySetInnerHTML={{__html: item.KCTITLE}}/>
                                                 </div>
                                             </a></div>
                                         <div className="col-lg-1" style={iconsStyle}><a onClick={this.openJSON}
@@ -766,8 +799,7 @@ class LoadDocuments extends React.Component {
 
                                 <div
                                     style={descriptionStyle}> <span
-                                    dangerouslySetInnerHTML={{__html: item.CONTENT}}/> <span
-                                    dangerouslySetInnerHTML={{__html: item.CONTENT_JPN_JP}}/></div>
+                                    dangerouslySetInnerHTML={{__html: item.CONTENT}}/></div>
                                 <hr className="my-1"
                                     style={item.ID === selectedDocumentID ? selectedDocumentHrStyle : documentHrStyle}/>
 

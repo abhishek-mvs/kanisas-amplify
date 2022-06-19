@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
-import 'react-accessible-accordion/dist/fancy-example.css';
 
 ReactDOM.render(<React.StrictMode>
     <App/>
