@@ -7,13 +7,10 @@ import Dropdown from 'react-dropdown';
 import 'react-dropdown/style.css';
 import {saveAs} from 'file-saver';
 import {FormCheck} from "react-bootstrap";
+import Autosuggest from 'react-autosuggest';
 
 import {
-    Accordion,
-    AccordionItem,
-    AccordionItemButton,
-    AccordionItemHeading,
-    AccordionItemPanel,
+    Accordion, AccordionItem, AccordionItemButton, AccordionItemHeading, AccordionItemPanel,
 } from 'react-accessible-accordion';
 
 class LoadDocuments extends React.Component {
@@ -36,7 +33,7 @@ class LoadDocuments extends React.Component {
             editionLanguages: [],
             checkedEditionLanguages: [],
             expandedEditionLanguages: [],
-
+            suggestions: [],
             checkedProducts: [],
             productsMap: {},
             productNodes: [],
@@ -57,6 +54,7 @@ class LoadDocuments extends React.Component {
             currentDocument: null,
             selectedDocumentID: -1,
             sortField: '',
+            value: '',
             sortOrder: 1,
             languageSelectionType: 'All',
             debug: false
@@ -76,6 +74,7 @@ class LoadDocuments extends React.Component {
         this.handleSortOrder = this.handleSortOrder.bind(this);
         this.handleLanguageSelectionType = this.handleLanguageSelectionType.bind(this);
         this.debugChanged = this.debugChanged.bind(this);
+        this.onSuggestionSelected = this.onSuggestionSelected.bind(this);
     }
 
     onProductsChange = checkedProducts => {
@@ -103,7 +102,7 @@ class LoadDocuments extends React.Component {
     }
 
     handleSearchChange(event) {
-        this.setState({searchString: event.target.value});
+        this.setState({value: event.target.value, searchString: event.target.value});
     }
 
     openDocument(event) {
@@ -116,42 +115,33 @@ class LoadDocuments extends React.Component {
         let fileName = url.substring(url.indexOf("Publishing/") + "Publishing/".length);
         console.log("Called open Document " + fileName);
         fetch(Urls.OPEN_DOCUMENT, {
-            method: 'post',
-            body: JSON.stringify({
+            method: 'post', body: JSON.stringify({
                 "fileName": fileName
             })
         })
-            .then(
-                (result) => {
-                    if (result.status === 200) {
-                        result.text().then((text) => {
-                            text = text.replace("#6699CC", "#303f9f")
-                            this.setState({
-                                selectedDocumentID: docID,
-                                currentDocument: text,
-                                resultsWidth: 'col-lg-4',
-                                documentWidth: 'col-lg-4'
-                            })
-                        });
-                    }
-                }, (error) => {
-                    this.setState({
-                        currentDocument: "",
-                        resultsWidth: 'col-lg-8',
-                        documentWidth: 'd-none',
-                        error
+            .then((result) => {
+                if (result.status === 200) {
+                    result.text().then((text) => {
+                        text = text.replace("#6699CC", "#303f9f")
+                        this.setState({
+                            selectedDocumentID: docID,
+                            currentDocument: text,
+                            resultsWidth: 'col-lg-4',
+                            documentWidth: 'col-lg-4'
+                        })
                     });
                 }
-            )
+            }, (error) => {
+                this.setState({
+                    currentDocument: "", resultsWidth: 'col-lg-8', documentWidth: 'd-none', error
+                });
+            })
     }
 
     closeSideWindow(event) {
         event.preventDefault();
         this.setState({
-            selectedDocumentID: -1,
-            currentDocument: "",
-            resultsWidth: 'col-lg-8',
-            documentWidth: 'hidden-lg'
+            selectedDocumentID: -1, currentDocument: "", resultsWidth: 'col-lg-8', documentWidth: 'hidden-lg'
         });
     }
 
@@ -162,33 +152,27 @@ class LoadDocuments extends React.Component {
         });
         let docId = event.currentTarget.getAttribute("data-doc-id");
         fetch(Urls.OPEN_DOCUMENT, {
-            method: 'post',
-            body: JSON.stringify({
+            method: 'post', body: JSON.stringify({
                 "docId": docId
             })
         })
-            .then(
-                (result) => {
-                    if (result.status === 200) {
-                        result.json().then((json) => {
-                            let formattedJSON = '<pre>' + JSON.stringify(json, null, 2) + '</pre>';
-                            this.setState({
-                                selectedDocumentID: docId,
-                                currentDocument: formattedJSON,
-                                resultsWidth: 'col-lg-4',
-                                documentWidth: 'col-lg-4'
-                            })
-                        });
-                    }
-                }, (error) => {
-                    this.setState({
-                        currentDocument: "",
-                        resultsWidth: 'col-lg-8',
-                        documentWidth: 'hidden-lg',
-                        error
+            .then((result) => {
+                if (result.status === 200) {
+                    result.json().then((json) => {
+                        let formattedJSON = '<pre>' + JSON.stringify(json, null, 2) + '</pre>';
+                        this.setState({
+                            selectedDocumentID: docId,
+                            currentDocument: formattedJSON,
+                            resultsWidth: 'col-lg-4',
+                            documentWidth: 'col-lg-4'
+                        })
                     });
                 }
-            )
+            }, (error) => {
+                this.setState({
+                    currentDocument: "", resultsWidth: 'col-lg-8', documentWidth: 'hidden-lg', error
+                });
+            })
     }
 
     debugChanged(event) {
@@ -218,37 +202,32 @@ class LoadDocuments extends React.Component {
         fetch(Urls.GET_TAXONOMIES + "action=getTaxoConcepts&param1=SAL_root", {
             method: 'get'
         })
-            .then(
-                (result) => {
-                    if (result.status === 200) {
-                        result.json().then(result => {
-                            let nodesTemp = result.map(concept => {
-                                return {
-                                    value: concept.id,
-                                    label: concept.names['LA_eng_US'].replace(/(.{15})..+/, "$1..")
-                                };
-                            });
-                            let checkedEntitlements = result.map(concept => concept.id);
-                            nodesTemp.sort(this.sortNames);
-                            this.setState({
-                                checkedEntitlements: checkedEntitlements,
-                                entitlementNodes: [{
-                                    value: 'Entitlements',
-                                    label: 'Entitlements', children: nodesTemp
-                                }]
-                            });
-                            this.loadProducts();
-                            this.loadEnterpriseSegments();
-                            this.loadDocumentTypes();
-                            this.loadLanguages();
-                            this.loadSortFieldsTypes();
-                            this.loadSortOrderTypes();
-                            this.loadLanguageSelectionTypes();
-                            this.loadList(0);
+            .then((result) => {
+                if (result.status === 200) {
+                    result.json().then(result => {
+                        let nodesTemp = result.map(concept => {
+                            return {
+                                value: concept.id, label: concept.names['LA_eng_US'].replace(/(.{15})..+/, "$1..")
+                            };
                         });
-                    }
+                        let checkedEntitlements = result.map(concept => concept.id);
+                        nodesTemp.sort(this.sortNames);
+                        this.setState({
+                            checkedEntitlements: checkedEntitlements, entitlementNodes: [{
+                                value: 'Entitlements', label: 'Entitlements', children: nodesTemp
+                            }]
+                        });
+                        this.loadProducts();
+                        this.loadEnterpriseSegments();
+                        this.loadDocumentTypes();
+                        this.loadLanguages();
+                        this.loadSortFieldsTypes();
+                        this.loadSortOrderTypes();
+                        this.loadLanguageSelectionTypes();
+                        this.loadList(0);
+                    });
                 }
-            )
+            })
     }
 
     sortNames(a, b) {
@@ -269,74 +248,63 @@ class LoadDocuments extends React.Component {
         fetch(Urls.GET_TAXONOMIES + "action=getEnterpriseSegments", {
             method: 'get'
         })
-            .then(
-                (result) => {
-                    if (result.status === 200) {
-                        result.json().then(result => {
-                            this.setState({
-                                enterpriseSegmentsNodes: result
-                            });
+            .then((result) => {
+                if (result.status === 200) {
+                    result.json().then(result => {
+                        this.setState({
+                            enterpriseSegmentsNodes: result
                         });
-                    }
+                    });
                 }
-            )
+            })
     }
 
     loadDocumentTypes() {
         fetch(Urls.GET_TAXONOMIES + "action=getTaxoConcepts&param1=DT_DocType", {
             method: 'get'
         })
-            .then(
-                (result) => {
-                    if (result.status === 200) {
-                        result.json().then(result => {
-                            let nodesTemp = result.map(concept => {
-                                return {
-                                    value: concept.id,
-                                    label: concept.names['LA_eng_US']
-                                };
-                            })
-                            nodesTemp.sort(this.sortNames);
-                            this.setState({
-                                documentTypes: nodesTemp
-                            });
+            .then((result) => {
+                if (result.status === 200) {
+                    result.json().then(result => {
+                        let nodesTemp = result.map(concept => {
+                            return {
+                                value: concept.id, label: concept.names['LA_eng_US']
+                            };
+                        })
+                        nodesTemp.sort(this.sortNames);
+                        this.setState({
+                            documentTypes: nodesTemp
                         });
-                    }
+                    });
                 }
-            )
+            })
     }
 
     loadLanguages() {
         fetch(Urls.GET_TAXONOMIES + "action=getTaxoConcepts&param1=LA_root", {
             method: 'get'
         })
-            .then(
-                (result) => {
-                    if (result.status === 200) {
-                        result.json().then(result => {
-                            let nodesTemp = result.map(concept => {
-                                return {
-                                    value: concept.id,
-                                    label: concept.names['LA_eng_US']
-                                };
-                            })
-                            nodesTemp.sort(this.sortNames)
-                            this.setState(
-                                {
-                                    documentLanguages: [{
-                                        value: 'documentLanguages',
-                                        label: 'Select Language', children: nodesTemp
-                                    }],
-                                    editionLanguages: [{
-                                        value: 'editionLanguages',
-                                        label: 'Select Language', children: nodesTemp
-                                    }]
-                                }
-                            )
-                        });
-                    }
+            .then((result) => {
+                if (result.status === 200) {
+                    result.json().then(result => {
+                        let nodesTemp = result.map(concept => {
+                            return {
+                                value: concept.id, label: concept.names['LA_eng_US']
+                            };
+                        })
+                        nodesTemp.sort(this.sortNames)
+                        this.setState({
+                            documentLanguages: [{
+                                value: 'documentLanguages',
+                                label: 'Select Language', children: nodesTemp
+                            }],
+                            editionLanguages: [{
+                                value: 'editionLanguages', label: 'Select Language', children: nodesTemp
+                            }]
+                        })
+                    });
                 }
-            )
+            })
     }
 
     loadSortFieldsTypes() {
@@ -355,8 +323,7 @@ class LoadDocuments extends React.Component {
     loadLanguageSelectionTypes() {
         this.setState({
             languageSelectionTypes: [{value: 'All', label: 'All languages'}, {
-                value: 'Selected',
-                label: 'Selected languages below'
+                value: 'Selected', label: 'Selected languages below'
             }, {value: 'Query', label: 'By determining query language'}]
         })
     }
@@ -365,27 +332,47 @@ class LoadDocuments extends React.Component {
         fetch(Urls.GET_TAXONOMIES + "action=getTaxoConcepts&param1=SG_root", {
             method: 'get'
         })
-            .then(
-                (result) => {
-                    if (result.status === 200) {
-                        result.json().then(result => {
-                            let productsMapTemp = result.reduce(function (map, concept) {
-                                map[concept.names['LA_eng_US']] = concept.id;
-                                return map;
-                            }, {});
-                            let nodesTemp = Object.keys(productsMapTemp);
-                            this.setState({
-                                productsMap: productsMapTemp,
-                                productNodes: nodesTemp
-                            });
+            .then((result) => {
+                if (result.status === 200) {
+                    result.json().then(result => {
+                        let productsMapTemp = result.reduce(function (map, concept) {
+                            map[concept.names['LA_eng_US']] = concept.id;
+                            return map;
+                        }, {});
+                        let nodesTemp = Object.keys(productsMapTemp);
+                        this.setState({
+                            productsMap: productsMapTemp, productNodes: nodesTemp
                         });
-                    }
+                    });
                 }
-            )
+            })
     }
 
     loadMore() {
         this.loadList(this.state.loadedDocumentsCount);
+    }
+
+    loadAutoSuggestionFields(searchString) {
+        fetch(Urls.GET_AUTO_SUGGESTIONS, {
+            method: 'post', body: JSON.stringify({
+                "query": searchString
+            })
+        }).then((result) => {
+            if (result.status === 200) {
+                result.json().then(result => {
+                    let nodesTemp = result.map(concept => {
+                        console.log(concept);
+                        return {
+                            value: concept, label: concept
+                        };
+                    })
+                    nodesTemp.sort(this.sortNames);
+                    this.setState({
+                        suggestions: nodesTemp
+                    });
+                });
+            }
+        })
     }
 
     loadList(startKCNum, exportDoc = false) {
@@ -404,11 +391,10 @@ class LoadDocuments extends React.Component {
                 loadedDocumentsCount: 1
             })
             this.setState({
-                listItems: [], listLoaded: false, totalHits: null,
-                searchDisplayQuery: "Entitlements = " + (this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root") +
-                    "\nSegments = " + (this.state.checkedEnterpriseSegments.length > 0 ? this.state.checkedEnterpriseSegments.join(",") : "NONE") +
-                    "\nProducts = " + (this.state.checkedProducts.length > 0 ? this.state.checkedProducts.join(",") : "NONE")
-                    + "\nQuery = " + (this.state.searchString ? this.state.searchString : "NONE") + "\nreturned "
+                listItems: [],
+                listLoaded: false,
+                totalHits: null,
+                searchDisplayQuery: "Entitlements = " + (this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root") + "\nSegments = " + (this.state.checkedEnterpriseSegments.length > 0 ? this.state.checkedEnterpriseSegments.join(",") : "NONE") + "\nProducts = " + (this.state.checkedProducts.length > 0 ? this.state.checkedProducts.join(",") : "NONE") + "\nQuery = " + (this.state.searchString ? this.state.searchString : "NONE") + "\nreturned "
             });
         }
         let documentIdMap = {
@@ -426,24 +412,13 @@ class LoadDocuments extends React.Component {
             "DT_QU_1": "-1",
         };
         //TODO Need to remove this hardCoding
-        let constraintChildren = [
-            {
-                "operation": "Or", "children": [
-                    {
-                        "operation": "Equal",
-                        "attributeType": "integer",
-                        "attributeName": "RATINGCOUNT",
-                        "value": "0"
-                    },
-                    {
-                        "operation": "Less",
-                        "attributeType": "integer",
-                        "attributeName": "RATING",
-                        "value": "125"
-                    }
-                ]
-            }
-        ];
+        let constraintChildren = [{
+            "operation": "Or", "children": [{
+                "operation": "Equal", "attributeType": "integer", "attributeName": "RATINGCOUNT", "value": "0"
+            }, {
+                "operation": "Less", "attributeType": "integer", "attributeName": "RATING", "value": "125"
+            }]
+        }];
         if (this.state.selectedDocumentType !== '' && this.state.selectedDocumentType !== '' && documentIdMap[this.state.selectedDocumentType] !== null && documentIdMap[this.state.selectedDocumentType] !== undefined) {
             constraintChildren = constraintChildren.concat({
                 "operation": "Equal",
@@ -469,8 +444,7 @@ class LoadDocuments extends React.Component {
             console.log(constraintChildren)
         }
         fetch(Urls.DOCUMENT_SEARCH, {
-            method: 'post',
-            body: JSON.stringify({
+            method: 'post', body: JSON.stringify({
                 "searchParams": {
                     "userQuery": this.state.searchString,
                     "entitlements": this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root",
@@ -483,16 +457,12 @@ class LoadDocuments extends React.Component {
                     "languageSelectionType": this.state.languageSelectionType,
                     "selectedLanguages": this.state.checkedDocumentLanguages.length > 0 ? this.state.checkedDocumentLanguages.join(",") : "",
                     "constraints": {
-                        "operation": "And",
-                        "children": constraintChildren
+                        "operation": "And", "children": constraintChildren
                     }
-                },
-                "export": exportDoc,
-                "debug": this.state.debug
+                }, "export": exportDoc, "debug": this.state.debug
             })
         })
-            .then(
-                (result) => {
+            .then((result) => {
                     if (exportDoc) {
                         if (result.status === 200) {
                             result.text().then((text) => {
@@ -522,23 +492,60 @@ class LoadDocuments extends React.Component {
                         });
                     } else {
                         this.setState({
-                            listLoaded: true,
-                            error: {'message': 'Failed to load data. Unknown error occurred'}
+                            listLoaded: true, error: {'message': 'Failed to load data. Unknown error occurred'}
                         });
                     }
-                },
-                // Note: it's important to handle errors here
+                }, // Note: it's important to handle errors here
                 // instead of a catch() block so that we don't swallow
                 // exceptions from actual bugs in components.
                 (error) => {
                     this.setState({
-                        listLoaded: true,
-                        error
+                        listLoaded: true, error
                     });
-                }
-            )
+                })
     }
 
+    onSuggestionsFetchRequested = ({value}) => {
+        this.loadAutoSuggestionFields(value);
+    };
+
+    onSuggestionsClearRequested = () => {
+        this.setState({
+            suggestions: []
+        });
+    };
+
+    onSuggestionSelected(event, {suggestion, suggestionValue, suggestionIndex, sectionIndex, method}) {
+        this.setState({
+            searchString: suggestion.label + ' ',
+            value: suggestion.label + ' '
+        }, function () {
+            this.loadList(0);
+        });
+    }
+
+    getSuggestionValue = suggestion => suggestion.name;
+
+    renderSuggestion = suggestion => (
+        <span>{suggestion.label}</span>
+    );
+
+    renderInputComponent = inputProps => (
+        <div>
+            <input type="text" {...inputProps}
+                   className="form-control"
+                   autoComplete="off"
+                   id="search"/>
+        </div>
+    );
+
+    renderSuggestionsContainer({containerProps, children, query}) {
+        return (
+            <div {...containerProps}>
+                {children}
+            </div>
+        );
+    }
 
     render() {
         const {
@@ -552,20 +559,16 @@ class LoadDocuments extends React.Component {
             resultsWidth,
             documentWidth,
             currentDocument,
-            selectedDocumentID
+            selectedDocumentID,
+            suggestions,
+            value
         } = this.state;
 
         const searchHitsStyle = {
-            color: '#666ad1',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            lineHeight: '120%',
-            margin: 0
+            color: '#666ad1', fontSize: '12px', fontWeight: 'bold', lineHeight: '120%', margin: 0
         };
         const submitBtnStyle = {
-            backgroundColor: '#666ad1',
-            color: 'white',
-            borderColor: '#666ad1'
+            backgroundColor: '#666ad1', color: 'white', borderColor: '#666ad1'
         };
         const searchControlsStyle = {
             textAlign: 'left',
@@ -577,20 +580,13 @@ class LoadDocuments extends React.Component {
             height: '100%'
         };
         const iconsStyle = {
-            padding: '0px 5px',
-            cursor: 'pointer'
+            padding: '0px 5px', cursor: 'pointer'
         }
         const selectedDocumentStyle = {
-            textAlign: 'left',
-            verticalAlign: 'top',
-            border: '2px solid #303f9f',
-            padding: '2px'
+            textAlign: 'left', verticalAlign: 'top', border: '2px solid #303f9f', padding: '2px'
         };
         const documentStyle = {
-            textAlign: 'left',
-            verticalAlign: 'top',
-            border: '2px solid white',
-            padding: '2px'
+            textAlign: 'left', verticalAlign: 'top', border: '2px solid white', padding: '2px'
         };
 
         const selectedDocumentHrStyle = {
@@ -599,10 +595,7 @@ class LoadDocuments extends React.Component {
         const documentHrStyle = {};
 
         const searchResultsStyle = {
-            textAlign: 'left',
-            margin: '2px',
-            padding: '5px',
-            verticalAlign: 'top'
+            textAlign: 'left', margin: '2px', padding: '5px', verticalAlign: 'top'
         };
         const documentViewStyle = {
             textAlign: 'left',
@@ -613,210 +606,209 @@ class LoadDocuments extends React.Component {
         };
 
         const headingStyle = {
-            cursor: 'pointer',
-            margin: '0px',
-            fontSize: '14px'
+            cursor: 'pointer', margin: '0px', fontSize: '14px'
         }
         const idStyle = {
-            color: '#001970',
-            fontWeight: 'bold'
+            color: '#001970', fontWeight: 'bold'
         };
         const descriptionStyle = {
-            overflow: 'hidden',
-            fontSize: '12px',
-            textOverflow: 'ellipsis',
-            maxHeight: '50px'
+            overflow: 'hidden', fontSize: '12px', textOverflow: 'ellipsis', maxHeight: '50px'
         }
         const entitlementStyle = {
-            height: '200px',
-            backgroundColor: 'white',
-            overflowY: 'scroll'
+            height: '200px', backgroundColor: 'white', overflowY: 'scroll'
         };
         const chipsStyle = {};
+        const inputProps = {
+            placeholder: 'Type a search word',
+            onChange: this.handleSearchChange,
+            value
+        };
 
-
-        return (
-            <div className="container-fluid">
-                <div className="row p-0">
-                    <div style={searchControlsStyle} className="col-lg-3">
-                        <div className="container p-0">
-                            <Accordion allowZeroExpanded={true} allowMultipleExpanded={true}>
-                                <AccordionItem>
-                                    <AccordionItemHeading>
-                                        <AccordionItemButton>
-                                            Languages
-                                        </AccordionItemButton>
-                                    </AccordionItemHeading>
-                                    <AccordionItemPanel>
-                                        Search from 
-                                        <Dropdown value={"All languages"}
-                                                  options={this.state.languageSelectionTypes}
-                                                  onChange={this.handleLanguageSelectionType}
+        return (<div className="container-fluid">
+            <div className="row p-0">
+                <div style={searchControlsStyle} className="col-lg-3">
+                    <div className="container p-0">
+                        <Accordion allowZeroExpanded={true} allowMultipleExpanded={true}>
+                            <AccordionItem>
+                                <AccordionItemHeading>
+                                    <AccordionItemButton>
+                                        Languages
+                                    </AccordionItemButton>
+                                </AccordionItemHeading>
+                                <AccordionItemPanel>
+                                    Search from
+                                    <Dropdown value={"All languages"}
+                                              options={this.state.languageSelectionTypes}
+                                              onChange={this.handleLanguageSelectionType}
+                                    ></Dropdown>
+                                    Select Languages
+                                    <div style={entitlementStyle}
+                                         className="border rounded">
+                                        <CheckboxTree
+                                            iconsClass="fa5"
+                                            showNodeIcon={false}
+                                            nodes={this.state.documentLanguages}
+                                            checked={this.state.checkedDocumentLanguages}
+                                            expanded={this.state.expandedDocumentLanguages}
+                                            onCheck={checked => this.setState({checkedDocumentLanguages: checked})}
+                                            onExpand={expanded => this.setState({expandedDocumentLanguages: expanded})}
+                                        />
+                                    </div>
+                                    Edition Languages
+                                    <div style={entitlementStyle}
+                                         className="border rounded">
+                                        <CheckboxTree
+                                            iconsClass="fa5"
+                                            showNodeIcon={false}
+                                            nodes={this.state.editionLanguages}
+                                            checked={this.state.checkedEditionLanguages}
+                                            expanded={this.state.expandedEditionLanguages}
+                                            onCheck={checked => this.setState({checkedEditionLanguages: checked})}
+                                            onExpand={expanded => this.setState({expandedEditionLanguages: expanded})}
+                                        />
+                                    </div>
+                                </AccordionItemPanel>
+                            </AccordionItem>
+                            <AccordionItem>
+                                <AccordionItemHeading>
+                                    <AccordionItemButton>
+                                        Segment Metadata
+                                    </AccordionItemButton>
+                                </AccordionItemHeading>
+                                <AccordionItemPanel>
+                                    Entitlements
+                                    <div style={entitlementStyle}
+                                         className="border rounded">
+                                        <CheckboxTree
+                                            iconsClass="fa5"
+                                            showNodeIcon={false}
+                                            nodes={this.state.entitlementNodes}
+                                            checked={this.state.checkedEntitlements}
+                                            expanded={this.state.expandedEntitlements}
+                                            onCheck={checked => this.setState({checkedEntitlements: checked})}
+                                            onExpand={expanded => this.setState({expandedEntitlements: expanded})}
+                                        />
+                                    </div>
+                                    Segments
+                                    <div style={entitlementStyle}
+                                         className="border rounded">
+                                        <CheckboxTree
+                                            iconsClass="fa5"
+                                            showNodeIcon={false}
+                                            nodes={this.state.enterpriseSegmentsNodes}
+                                            checked={this.state.checkedEnterpriseSegments}
+                                            expanded={this.state.expandedEnterpriseSegments}
+                                            onCheck={checked => this.setState({checkedEnterpriseSegments: checked})}
+                                            onExpand={expanded => this.setState({expandedEnterpriseSegments: expanded})}
+                                        />
+                                    </div>
+                                    Document Type
+                                    <div
+                                        className="border rounded">
+                                        <Dropdown
+                                            options={this.state.documentTypes}
+                                            onChange={this.handleDocumentTypeChange}
+                                        />
+                                    </div>
+                                    Products
+                                    <div style={chipsStyle}>
+                                        <Chips
+                                            value={this.state.checkedProducts}
+                                            onChange={this.onProductsChange}
+                                            suggestions={this.state.productNodes}
+                                            className="form-control form-control-lg"
+                                            fromSuggestionsOnly={true}
+                                        /></div>
+                                </AccordionItemPanel>
+                            </AccordionItem>
+                        </Accordion>
+                        <form onSubmit={this.handleSubmit}>
+                            <label htmlFor="search">Keywords</label>
+                            <Autosuggest
+                                suggestions={suggestions}
+                                onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
+                                onSuggestionsClearRequested={this.onSuggestionsClearRequested}
+                                getSuggestionValue={this.getSuggestionValue}
+                                renderSuggestion={this.renderSuggestion}
+                                renderInputComponent={this.renderInputComponent}
+                                renderSuggestionsContainer={this.renderSuggestionsContainer}
+                                onSuggestionSelected={this.onSuggestionSelected}
+                                inputProps={inputProps}
+                            />
+                            <div className="container-fluid p-0">
+                                <div className="row g-0">
+                                    <div className="col-md-9">
+                                        Sort By
+                                        <Dropdown value={"Score"}
+                                                  options={this.state.sortFieldsTypes}
+                                                  onChange={this.handleSortField}>
+                                        </Dropdown>
+                                    </div>
+                                    <div className="col-md-3">
+                                        Order
+                                        <Dropdown value={"asc"}
+                                                  options={this.state.sortOrderTypes}
+                                                  onChange={this.handleSortOrder}
                                         ></Dropdown>
-                                        Select Languages
-                                        <div style={entitlementStyle}
-                                             className="border rounded">
-                                            <CheckboxTree
-                                                iconsClass="fa5"
-                                                showNodeIcon={false}
-                                                nodes={this.state.documentLanguages}
-                                                checked={this.state.checkedDocumentLanguages}
-                                                expanded={this.state.expandedDocumentLanguages}
-                                                onCheck={checked => this.setState({checkedDocumentLanguages: checked})}
-                                                onExpand={expanded => this.setState({expandedDocumentLanguages: expanded})}
-                                            />
-                                        </div>
-                                        Edition Languages
-                                        <div style={entitlementStyle}
-                                             className="border rounded">
-                                            <CheckboxTree
-                                                iconsClass="fa5"
-                                                showNodeIcon={false}
-                                                nodes={this.state.editionLanguages}
-                                                checked={this.state.checkedEditionLanguages}
-                                                expanded={this.state.expandedEditionLanguages}
-                                                onCheck={checked => this.setState({checkedEditionLanguages: checked})}
-                                                onExpand={expanded => this.setState({expandedEditionLanguages: expanded})}
-                                            />
-                                        </div>
-                                    </AccordionItemPanel>
-                                </AccordionItem>
-                                <AccordionItem>
-                                    <AccordionItemHeading>
-                                        <AccordionItemButton>
-                                            Segment Metadata
-                                        </AccordionItemButton>
-                                    </AccordionItemHeading>
-                                    <AccordionItemPanel>
-                                        Entitlements
-                                        <div style={entitlementStyle}
-                                             className="border rounded">
-                                            <CheckboxTree
-                                                iconsClass="fa5"
-                                                showNodeIcon={false}
-                                                nodes={this.state.entitlementNodes}
-                                                checked={this.state.checkedEntitlements}
-                                                expanded={this.state.expandedEntitlements}
-                                                onCheck={checked => this.setState({checkedEntitlements: checked})}
-                                                onExpand={expanded => this.setState({expandedEntitlements: expanded})}
-                                            />
-                                        </div>
-                                        Segments
-                                        <div style={entitlementStyle}
-                                             className="border rounded">
-                                            <CheckboxTree
-                                                iconsClass="fa5"
-                                                showNodeIcon={false}
-                                                nodes={this.state.enterpriseSegmentsNodes}
-                                                checked={this.state.checkedEnterpriseSegments}
-                                                expanded={this.state.expandedEnterpriseSegments}
-                                                onCheck={checked => this.setState({checkedEnterpriseSegments: checked})}
-                                                onExpand={expanded => this.setState({expandedEnterpriseSegments: expanded})}
-                                            />
-                                        </div>
-                                        Document Type
-                                        <div
-                                            className="border rounded">
-                                            <Dropdown
-                                                options={this.state.documentTypes}
-                                                onChange={this.handleDocumentTypeChange}
-                                            />
-                                        </div>
-                                        Products
-                                        <div style={chipsStyle}>
-                                            <Chips
-                                                value={this.state.checkedProducts}
-                                                onChange={this.onProductsChange}
-                                                suggestions={this.state.productNodes}
-                                                className="form-control form-control-lg"
-                                                fromSuggestionsOnly={true}
-                                            /></div>
-                                    </AccordionItemPanel>
-                                </AccordionItem>
-                            </Accordion>
-                            <form onSubmit={this.handleSubmit}>
-                                <label htmlFor="search">Keywords</label>
-                                <input type="text" value={this.state.searchString}
-                                       onChange={this.handleSearchChange}
-                                       className="form-control"
-                                       autoComplete="off"
-                                       id="search"/>
-                                <div className="container-fluid p-0">
-                                    <div className="row g-0">
-                                        <div className="col-md-9">
-                                            Sort By
-                                            <Dropdown value={"Score"}
-                                                      options={this.state.sortFieldsTypes}
-                                                      onChange={this.handleSortField}>
-                                            </Dropdown>
-                                        </div>
-                                        <div className="col-md-3">
-                                            Order
-                                            <Dropdown value={"asc"}
-                                                      options={this.state.sortOrderTypes}
-                                                      onChange={this.handleSortOrder}
-                                            ></Dropdown>
-                                        </div>
                                     </div>
                                 </div>
-                                <Button type="submit" onClick={this.handleSubmit}
-                                        className="mt-2 btn"
-                                        style={submitBtnStyle}>Search</Button>&nbsp;&nbsp;
-                                <Button type="button" onClick={this.handleExport}
-                                        className="mt-2 btn btn-secondary">Export</Button>&nbsp;&nbsp;
-                                <FormCheck name="Debug" title="Debug" onChange={this.debugChanged}
-                                           label="Show Opensearch Query"/>
-                            </form>
-                        </div>
-
+                            </div>
+                            <Button type="submit" onClick={this.handleSubmit}
+                                    className="mt-2 btn"
+                                    style={submitBtnStyle}>Search</Button>&nbsp;&nbsp;
+                            <Button type="button" onClick={this.handleExport}
+                                    className="mt-2 btn btn-secondary">Export</Button>&nbsp;&nbsp;
+                            <FormCheck name="Debug" title="Debug" onChange={this.debugChanged}
+                                       label="Show Opensearch Query"/>
+                        </form>
                     </div>
-                    <div style={searchResultsStyle} className={resultsWidth}>
+
+                </div>
+                <div style={searchResultsStyle} className={resultsWidth}>
                     <pre
                         style={searchHitsStyle}
                         className="">{totalHits != null ? (searchDisplayQuery + totalHits + " results") : ""}</pre>
-                        <hr className="my-1"/>
-                        {(listItems != null && listItems.length > 0) ? listItems.map(item => (
+                    <hr className="my-1"/>
+                    {(listItems != null && listItems.length > 0) ? listItems.map(item => (
 
-                            <div key={item.ID}
-                                 style={item.ID === selectedDocumentID ? selectedDocumentStyle : documentStyle}>
-                                <div className="container p-0">
-                                    <div className="row">
-                                        <div className="col-lg-11">
-                                            <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}
-                                               data-doc-id={item.ID}>
-                                                <div style={headingStyle}>
+                        <div key={item.ID}
+                             style={item.ID === selectedDocumentID ? selectedDocumentStyle : documentStyle}>
+                            <div className="container p-0">
+                                <div className="row">
+                                    <div className="col-lg-11">
+                                        <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}
+                                           data-doc-id={item.ID}>
+                                            <div style={headingStyle}>
                             <span
                                 style={idStyle}>{item.KCEXTERNALID}</span> <span
-                                                    dangerouslySetInnerHTML={{__html: item.KCTITLE}}/>
-                                                </div>
-                                            </a></div>
-                                        <div className="col-lg-1" style={iconsStyle}><a onClick={this.openJSON}
-                                                                                        data-doc-id={item.ID}><img
-                                            src="img/knowledge.png" height="20px"/>
+                                                dangerouslySetInnerHTML={{__html: item.KCTITLE}}/>
+                                            </div>
                                         </a></div>
-                                    </div>
+                                    <div className="col-lg-1" style={iconsStyle}><a onClick={this.openJSON}
+                                                                                    data-doc-id={item.ID}><img
+                                        src="img/knowledge.png" height="20px"/>
+                                    </a></div>
                                 </div>
-
-                                <div
-                                    style={descriptionStyle}> <span
-                                    dangerouslySetInnerHTML={{__html: item.CONTENT}}/></div>
-                                <hr className="my-1"
-                                    style={item.ID === selectedDocumentID ? selectedDocumentHrStyle : documentHrStyle}/>
-
                             </div>
-                        )) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
-                        {totalHits > loadedDocumentsCount ?
-                            <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}
-                    </div>
-                    <div style={documentViewStyle} className={documentWidth}
-                    >
-                        <a onClick={this.closeSideWindow}><img
-                            src="img/delete.gif" height="20px"/></a>
-                        <div dangerouslySetInnerHTML={{__html: currentDocument}}/>
-                    </div>
+
+                            <div
+                                style={descriptionStyle}> <span
+                                dangerouslySetInnerHTML={{__html: item.CONTENT}}/></div>
+                            <hr className="my-1"
+                                style={item.ID === selectedDocumentID ? selectedDocumentHrStyle : documentHrStyle}/>
+
+                        </div>)) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
+                    {totalHits > loadedDocumentsCount ?
+                        <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}
+                </div>
+                <div style={documentViewStyle} className={documentWidth}
+                >
+                    <a onClick={this.closeSideWindow}><img
+                        src="img/delete.gif" height="20px"/></a>
+                    <div dangerouslySetInnerHTML={{__html: currentDocument}}/>
                 </div>
             </div>
-        );
+        </div>);
     }
 }
 
