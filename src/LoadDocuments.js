@@ -6,17 +6,25 @@ import Urls from './Urls'
 import Dropdown from 'react-dropdown';
 import 'react-dropdown/style.css';
 import {saveAs} from 'file-saver';
-import {FormCheck} from "react-bootstrap";
+import {FormCheck, Modal} from "react-bootstrap";
 import Autosuggest from 'react-autosuggest';
 
 import {
     Accordion, AccordionItem, AccordionItemButton, AccordionItemHeading, AccordionItemPanel,
 } from 'react-accessible-accordion';
+import Cookies from "universal-cookie";
 
 class LoadDocuments extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            autoSuggestionString: '',
+            showProfile: false,
+            userProfile: {},
+            microsites: [],
+            userSegments: [],
+            userAccessLevels: [],
+            currentMicrosite: '',
             checkedEntitlements: [],
             expandedEntitlements: ['Entitlements'],
             entitlementNodes: [],
@@ -75,10 +83,26 @@ class LoadDocuments extends React.Component {
         this.handleLanguageSelectionType = this.handleLanguageSelectionType.bind(this);
         this.debugChanged = this.debugChanged.bind(this);
         this.onSuggestionSelected = this.onSuggestionSelected.bind(this);
+        this.chooseMicrosite = this.chooseMicrosite.bind(this);
+        this.logout = this.logout.bind(this);
+    }
+
+    chooseMicrosite(event) {
+        event.preventDefault();
+        this.setState({
+            currentMicrosite: event.currentTarget.getAttribute("data-microsite-id")
+        })
+        console.log('Microsite changed to ' + event.currentTarget.getAttribute("data-microsite-id"));
     }
 
     onProductsChange = checkedProducts => {
         this.setState({checkedProducts});
+    }
+
+    logout(event) {
+        const cookies = new Cookies();
+        cookies.remove('user');
+        this.props.history.push('/');
     }
 
     handleLanguageChange(event) {
@@ -193,7 +217,21 @@ class LoadDocuments extends React.Component {
     }
 
     componentDidMount() {
-        this.loadEntitlements();
+        const cookies = new Cookies();
+        if (cookies.get('user') === null || cookies.get('user') === undefined) {
+            this.props.history.push('/');
+            return;
+        }
+        this.setState({
+            userProfile: cookies.get('user'),
+            microsites: cookies.get('user')['microsites'],
+            userSegments: cookies.get('user')['segments'],
+            userAccessLevels: cookies.get('user')['accessLevels'],
+            currentMicrosite: cookies.get('user')['microsites'][0].id
+        }, () => {
+
+            this.loadEntitlements();
+        });
     }
 
     loadEntitlements() {
@@ -210,10 +248,10 @@ class LoadDocuments extends React.Component {
                                 value: concept.id, label: concept.names['LA_eng_US'].replace(/(.{15})..+/, "$1..")
                             };
                         });
-                        let checkedEntitlements = result.map(concept => concept.id);
                         nodesTemp.sort(this.sortNames);
                         this.setState({
-                            checkedEntitlements: checkedEntitlements, entitlementNodes: [{
+                            checkedEntitlements: this.state.userAccessLevels,
+                            entitlementNodes: [{
                                 value: 'Entitlements', label: 'Entitlements', children: nodesTemp
                             }]
                         });
@@ -224,7 +262,6 @@ class LoadDocuments extends React.Component {
                         this.loadSortFieldsTypes();
                         this.loadSortOrderTypes();
                         this.loadLanguageSelectionTypes();
-                        this.loadList(0);
                     });
                 }
             })
@@ -251,9 +288,33 @@ class LoadDocuments extends React.Component {
             .then((result) => {
                 if (result.status === 200) {
                     result.json().then(result => {
+                        let userSegments = this.state.userSegments;
+                        let segmentSummaryMap = {};
+                        let selectedSegmentsNodes = [];
+                        for (let i = 0; i < userSegments.length; i++) {
+                            let segment = userSegments[i];
+                            if (segment.indexOf("_") !== -1) {
+                                let prefix = segment.substring(0, segment.indexOf("_"));
+                                if (segmentSummaryMap[prefix] === undefined) {
+                                    segmentSummaryMap[prefix] = [];
+                                }
+                                segmentSummaryMap[prefix].push(segment);
+                                selectedSegmentsNodes.push(segment);
+                            }
+                        }
+                        console.log("Segment Summary Map " + JSON.stringify(segmentSummaryMap));
+                        for (let j = 0; j < result.length; j++) {
+                            let enterpriseSegmentKey = result[j].value;
+                            let enterpriseSegmentPrefix = enterpriseSegmentKey.substring(0, enterpriseSegmentKey.indexOf("_"));
+                            if (segmentSummaryMap[enterpriseSegmentPrefix] !== undefined) {
+                                result[j].children = result[j].children.filter(e => segmentSummaryMap[enterpriseSegmentPrefix].includes(e.value));
+                            }
+                        }
                         this.setState({
+                            checkedEnterpriseSegments: selectedSegmentsNodes,
                             enterpriseSegmentsNodes: result
                         });
+                        this.loadList(0);
                     });
                 }
             })
@@ -352,14 +413,18 @@ class LoadDocuments extends React.Component {
         this.loadList(this.state.loadedDocumentsCount);
     }
 
-    loadAutoSuggestionFields(searchString) {
+    loadAutoSuggestionFields(autoSuggestionString) {
+        this.setState({
+            autoSuggestionString: autoSuggestionString
+        })
         fetch(Urls.GET_AUTO_SUGGESTIONS, {
             method: 'post', body: JSON.stringify({
-                "query": searchString
+                "query": autoSuggestionString
             })
         }).then((result) => {
             if (result.status === 200) {
                 result.json().then(result => {
+                    if (this.state.autoSuggestionString !== autoSuggestionString) return;
                     let nodesTemp = result.map(concept => {
                         console.log(concept);
                         return {
@@ -394,7 +459,7 @@ class LoadDocuments extends React.Component {
                 listItems: [],
                 listLoaded: false,
                 totalHits: null,
-                searchDisplayQuery: "Entitlements = " + (this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root") + "\nSegments = " + (this.state.checkedEnterpriseSegments.length > 0 ? this.state.checkedEnterpriseSegments.join(",") : "NONE") + "\nProducts = " + (this.state.checkedProducts.length > 0 ? this.state.checkedProducts.join(",") : "NONE") + "\nQuery = " + (this.state.searchString ? this.state.searchString : "NONE") + "\nreturned "
+                searchDisplayQuery: "Microsite = " + (this.state.currentMicrosite) + "\nEntitlements = " + (this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root") + "\nSegments = " + (this.state.checkedEnterpriseSegments.length > 0 ? this.state.checkedEnterpriseSegments.join(",") : "NONE") + "\nProducts = " + (this.state.checkedProducts.length > 0 ? this.state.checkedProducts.join(",") : "NONE") + "\nQuery = " + (this.state.searchString ? this.state.searchString : "NONE") + "\nreturned "
             });
         }
         let documentIdMap = {
@@ -450,6 +515,7 @@ class LoadDocuments extends React.Component {
                     "entitlements": this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root",
                     "segments": this.state.checkedEnterpriseSegments.length > 0 ? this.state.checkedEnterpriseSegments.join(",") : null,
                     "products": this.state.checkedProducts.length > 0 ? this.state.checkedProducts.map(chip => this.state.productsMap[chip]).join(",") : null,
+                    "microsite": this.state.currentMicrosite,
                     "numKCs": exportDoc ? 500 : 30,
                     "startKCNum": startKCNum,
                     "sortField": this.state.sortField,
@@ -547,10 +613,15 @@ class LoadDocuments extends React.Component {
         );
     }
 
+    handleUserProfileModal() {
+        this.setState({showProfile: !this.state.showProfile})
+    }
+
     render() {
         const {
             error,
             isLoaded,
+            userProfile,
             listLoaded,
             listItems,
             totalHits,
@@ -561,8 +632,22 @@ class LoadDocuments extends React.Component {
             currentDocument,
             selectedDocumentID,
             suggestions,
-            value
+            value,
+            microsites,
+            currentMicrosite
         } = this.state;
+
+        const selectedMicrositeStyle = {
+            color: '#ff984d', fontSize: '12px', fontWeight: 'bold', lineHeight: '120%', margin: 0
+        };
+        const micrositeStyle = {
+            color: 'black',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            lineHeight: '120%',
+            margin: 0,
+            textDecorationStyle: 'underline'
+        };
 
         const searchHitsStyle = {
             color: '#666ad1', fontSize: '12px', fontWeight: 'bold', lineHeight: '120%', margin: 0
@@ -611,6 +696,10 @@ class LoadDocuments extends React.Component {
         const idStyle = {
             color: '#001970', fontWeight: 'bold'
         };
+        const nameStyle = {
+            color: '#001970', fontWeight: 'bold', textTransform: 'capitalize'
+
+        };
         const descriptionStyle = {
             overflow: 'hidden', fontSize: '12px', textOverflow: 'ellipsis', maxHeight: '50px'
         }
@@ -628,7 +717,56 @@ class LoadDocuments extends React.Component {
             <div className="row p-0">
                 <div style={searchControlsStyle} className="col-lg-3">
                     <div className="container p-0">
+                        <div style={{width: '100%', padding: '15px 10px 25px 10px'}}>
+                            <table style={{
+                                width: '100%'
+                            }}>
+                                <tr>
+                                    <td>
+                                        <img src="img/kiku_logo.png" style={{height: '40px'}}
+                                             alt="Kiku Logo"/>
+                                    </td>
+                                    <td style={{textAlign: 'right'}}>
+                                        <h6 style={nameStyle}>{userProfile.firstname} {userProfile.lastname}</h6>
+                                        <a href="#" onClick={() => this.handleUserProfileModal()}>Profile</a> | <a
+                                        href="#"
+                                        onClick={this.logout}>Logout</a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <Modal show={this.state.showProfile} onHide={() => this.handleUserProfileModal()}>
+                                <Modal.Header closeButton>User Profile</Modal.Header>
+                                <Modal.Body>
+                                    <h4 style={nameStyle}>{userProfile.firstname} {userProfile.lastname}</h4>
+                                    <h6>{userProfile.username}</h6>
+                                    <br/>
+                                    <b>Knowledge
+                                        Panel</b> {this.state.microsites.map((t) => t['names']['LA_eng_US']).join(", ")}<br/>
+                                    <b>Entitlements</b> {this.state.userAccessLevels.join(", ")}<br/>
+                                    <b>Segments</b> {this.state.userSegments.join(", ")}<br/></Modal.Body>
+                                <Modal.Footer>
+                                    <Button onClick={() => this.handleUserProfileModal()}>Close</Button>
+                                </Modal.Footer>
+                            </Modal>
+                        </div>
+
+
                         <Accordion allowZeroExpanded={true} allowMultipleExpanded={true}>
+                            <AccordionItem dangerouslySetExpanded={true}>
+                                <AccordionItemHeading>
+                                    <AccordionItemButton>
+                                        Knowledge Group
+                                    </AccordionItemButton>
+                                </AccordionItemHeading>
+                                <AccordionItemPanel>
+                                    {microsites.map(item =>
+                                        <a
+                                            key={item.id}
+                                            style={(item.id === currentMicrosite) ? selectedMicrositeStyle : micrositeStyle}
+                                            onClick={this.chooseMicrosite}
+                                            data-microsite-id={item.id}>{item.names['LA_eng_US']} &nbsp;</a>)}
+                                </AccordionItemPanel>
+                            </AccordionItem>
                             <AccordionItem>
                                 <AccordionItemHeading>
                                     <AccordionItemButton>
@@ -676,18 +814,20 @@ class LoadDocuments extends React.Component {
                                     </AccordionItemButton>
                                 </AccordionItemHeading>
                                 <AccordionItemPanel>
-                                    Entitlements
-                                    <div style={entitlementStyle}
-                                         className="border rounded">
-                                        <CheckboxTree
-                                            iconsClass="fa5"
-                                            showNodeIcon={false}
-                                            nodes={this.state.entitlementNodes}
-                                            checked={this.state.checkedEntitlements}
-                                            expanded={this.state.expandedEntitlements}
-                                            onCheck={checked => this.setState({checkedEntitlements: checked})}
-                                            onExpand={expanded => this.setState({expandedEntitlements: expanded})}
-                                        />
+                                    <div style={{display: 'none'}}>
+                                        Entitlements
+                                        <div style={entitlementStyle}
+                                             className="border rounded">
+                                            <CheckboxTree
+                                                iconsClass="fa5"
+                                                showNodeIcon={false}
+                                                nodes={this.state.entitlementNodes}
+                                                checked={this.state.checkedEntitlements}
+                                                expanded={this.state.expandedEntitlements}
+                                                onCheck={checked => this.setState({checkedEntitlements: checked})}
+                                                onExpand={expanded => this.setState({expandedEntitlements: expanded})}
+                                            />
+                                        </div>
                                     </div>
                                     Segments
                                     <div style={entitlementStyle}
