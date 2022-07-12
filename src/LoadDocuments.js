@@ -25,6 +25,7 @@ class LoadDocuments extends React.Component {
             userSegments: [],
             userAccessLevels: [],
             currentMicrosite: '',
+            buckets: [],
             checkedEntitlements: [],
             expandedEntitlements: ['Entitlements'],
             entitlementNodes: [],
@@ -84,6 +85,7 @@ class LoadDocuments extends React.Component {
         this.debugChanged = this.debugChanged.bind(this);
         this.onSuggestionSelected = this.onSuggestionSelected.bind(this);
         this.chooseMicrosite = this.chooseMicrosite.bind(this);
+        this.chooseBucketKeyword = this.chooseBucketKeyword.bind(this);
         this.logout = this.logout.bind(this);
     }
 
@@ -540,9 +542,11 @@ class LoadDocuments extends React.Component {
                     }
                     if (result.status === 200) {
                         result.json().then(result => {
+                            let validBuckets = result.buckets.filter(e => result.totalHits != 10000 && e.count >= 0.2 * result.totalHits && e.count <= 0.6 * result.totalHits).slice(0, 20);
                             this.setState({
                                 listLoaded: true,
                                 totalHits: result.totalHits,
+                                buckets: validBuckets,
                                 listItems: this.state.listItems.concat(result.hits),
                                 loadedDocumentsCount: this.state.loadedDocumentsCount + result.hits.length
                             });
@@ -590,6 +594,16 @@ class LoadDocuments extends React.Component {
         });
     }
 
+    chooseBucketKeyword(event) {
+        let bucketKey = event.currentTarget.getAttribute("data-bucket-key");
+        this.setState({
+            searchString: this.state.searchString.trim() + ' ' + bucketKey,
+            value: this.state.searchString.trim() + ' ' + bucketKey,
+        }, function () {
+            this.loadList(0);
+        });
+    }
+
     getSuggestionValue = suggestion => suggestion.name;
 
     renderSuggestion = suggestion => (
@@ -625,6 +639,7 @@ class LoadDocuments extends React.Component {
             listLoaded,
             listItems,
             totalHits,
+            buckets,
             loadedDocumentsCount,
             searchDisplayQuery,
             resultsWidth,
@@ -650,22 +665,26 @@ class LoadDocuments extends React.Component {
         };
 
         const searchHitsStyle = {
-            color: '#666ad1', fontSize: '12px', fontWeight: 'bold', lineHeight: '120%', margin: 0
+            color: '#41a4ff', fontSize: '14px', fontWeight: 'bold', lineHeight: '120%', margin: 0,
+            fontFamily: 'Segoe UI'
         };
         const submitBtnStyle = {
-            backgroundColor: '#666ad1', color: 'white', borderColor: '#666ad1'
+            backgroundColor: '#41a4ff', color: 'white', borderColor: '#41a4ff'
         };
         const searchControlsStyle = {
             textAlign: 'left',
             margin: '2px',
             padding: '5px',
-            backgroundColor: '#eeeeee',
             verticalAlign: 'top',
             fontSize: '14px',
             height: '100%'
         };
         const iconsStyle = {
             padding: '0px 5px', cursor: 'pointer'
+        }
+        const bucketKeyStyle = {
+            padding: '5px', cursor: 'pointer',
+            fontSize: '14px', fontFamily: 'Roboto'
         }
         const selectedDocumentStyle = {
             textAlign: 'left', verticalAlign: 'top', border: '2px solid #303f9f', padding: '2px'
@@ -715,44 +734,68 @@ class LoadDocuments extends React.Component {
 
         return (<div className="container-fluid">
             <div className="row p-0">
+                <div className="col-lg-2 p-3"><img src="img/kiku_logo.png" style={{height: '40px'}}
+                                                   alt="Kiku Logo"/></div>
+                <div className="col-lg-7 p-2">
+                    <form onSubmit={this.handleSubmit}>
+
+                        <table style={{width: '100%'}}>
+                            <tr>
+                                <td style={{width: '60%'}}>
+                                    <Autosuggest
+                                        suggestions={suggestions}
+                                        onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
+                                        onSuggestionsClearRequested={this.onSuggestionsClearRequested}
+                                        getSuggestionValue={this.getSuggestionValue}
+                                        renderSuggestion={this.renderSuggestion}
+                                        renderInputComponent={this.renderInputComponent}
+                                        renderSuggestionsContainer={this.renderSuggestionsContainer}
+                                        onSuggestionSelected={this.onSuggestionSelected}
+                                        inputProps={inputProps}
+                                    />
+                                </td>
+                                <td>
+                                    <Button type="submit" onClick={this.handleSubmit}
+                                            className="mt-2 btn m-2"
+                                            style={submitBtnStyle}>Search</Button>
+                                    <Button type="button" onClick={this.handleExport}
+                                            className="mt-2 btn btn-secondary m-2">Export</Button>
+                                </td>
+                            </tr>
+                        </table>
+
+                    </form>
+                </div>
+                <div className="col-lg-2 p-2" style={{textAlign: 'right'}}>
+                    <h6 style={nameStyle}>{userProfile.firstname} {userProfile.lastname}</h6>
+                    <a href="#" onClick={() => this.handleUserProfileModal()}>Profile</a> | <a
+                    href="#"
+                    onClick={this.logout}>Logout</a>
+                </div>
                 <div style={searchControlsStyle} className="col-lg-3">
                     <div className="container p-0">
-                        <div style={{width: '100%', padding: '15px 10px 25px 10px'}}>
-                            <table style={{
-                                width: '100%'
-                            }}>
-                                <tr>
-                                    <td>
-                                        <img src="img/kiku_logo.png" style={{height: '40px'}}
-                                             alt="Kiku Logo"/>
-                                    </td>
-                                    <td style={{textAlign: 'right'}}>
-                                        <h6 style={nameStyle}>{userProfile.firstname} {userProfile.lastname}</h6>
-                                        <a href="#" onClick={() => this.handleUserProfileModal()}>Profile</a> | <a
-                                        href="#"
-                                        onClick={this.logout}>Logout</a>
-                                    </td>
-                                </tr>
-                            </table>
-                            <Modal show={this.state.showProfile} onHide={() => this.handleUserProfileModal()}>
-                                <Modal.Header closeButton>User Profile</Modal.Header>
-                                <Modal.Body>
-                                    <h4 style={nameStyle}>{userProfile.firstname} {userProfile.lastname}</h4>
-                                    <h6>{userProfile.username}</h6>
-                                    <br/>
-                                    <b>Knowledge
-                                        Panel</b> {this.state.microsites.map((t) => t['names']['LA_eng_US']).join(", ")}<br/>
-                                    <b>Entitlements</b> {this.state.userAccessLevels.join(", ")}<br/>
-                                    <b>Segments</b> {this.state.userSegments.join(", ")}<br/></Modal.Body>
-                                <Modal.Footer>
-                                    <Button onClick={() => this.handleUserProfileModal()}>Close</Button>
-                                </Modal.Footer>
-                            </Modal>
-                        </div>
-
 
                         <Accordion allowZeroExpanded={true} allowMultipleExpanded={true}>
-                            <AccordionItem dangerouslySetExpanded={true}>
+                            {buckets.length !== 0 ? <AccordionItem dangerouslySetExpanded={true}>
+                                <AccordionItemHeading>
+                                    <AccordionItemButton>
+                                        Suggestions
+                                    </AccordionItemButton>
+                                </AccordionItemHeading>
+                                <AccordionItemPanel>
+                                    <div style={{backgroundColor: 'white'}}>
+                                        {buckets.map(bucket =>
+                                            <div style={bucketKeyStyle}>
+                                                <a
+                                                    key={bucket.key}
+                                                    data-bucket-key={bucket.key}
+                                                    onClick={this.chooseBucketKeyword}>{bucket.key} ({bucket.count})</a>
+                                            </div>)}
+                                    </div>
+
+                                </AccordionItemPanel>
+                            </AccordionItem> : <span></span>}
+                            <AccordionItem>
                                 <AccordionItemHeading>
                                     <AccordionItemButton>
                                         Knowledge Group
@@ -861,53 +904,44 @@ class LoadDocuments extends React.Component {
                                         /></div>
                                 </AccordionItemPanel>
                             </AccordionItem>
+                            <AccordionItem>
+                                <AccordionItemHeading>
+                                    <AccordionItemButton>
+                                        Others
+                                    </AccordionItemButton>
+                                </AccordionItemHeading>
+                                <AccordionItemPanel>
+                                    <div className="container-fluid p-0">
+                                        <div className="row g-0">
+                                            <div className="col-md-9">
+                                                Sort By
+                                                <Dropdown value={"Score"}
+                                                          options={this.state.sortFieldsTypes}
+                                                          onChange={this.handleSortField}>
+                                                </Dropdown>
+                                            </div>
+                                            <div className="col-md-3">
+                                                Order
+                                                <Dropdown value={"asc"}
+                                                          options={this.state.sortOrderTypes}
+                                                          onChange={this.handleSortOrder}
+                                                ></Dropdown>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <FormCheck name="Debug" title="Debug" onChange={this.debugChanged}
+                                               label="Show Opensearch Query"/>
+                                </AccordionItemPanel>
+                            </AccordionItem>
                         </Accordion>
-                        <form onSubmit={this.handleSubmit}>
-                            <label htmlFor="search">Keywords</label>
-                            <Autosuggest
-                                suggestions={suggestions}
-                                onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
-                                onSuggestionsClearRequested={this.onSuggestionsClearRequested}
-                                getSuggestionValue={this.getSuggestionValue}
-                                renderSuggestion={this.renderSuggestion}
-                                renderInputComponent={this.renderInputComponent}
-                                renderSuggestionsContainer={this.renderSuggestionsContainer}
-                                onSuggestionSelected={this.onSuggestionSelected}
-                                inputProps={inputProps}
-                            />
-                            <div className="container-fluid p-0">
-                                <div className="row g-0">
-                                    <div className="col-md-9">
-                                        Sort By
-                                        <Dropdown value={"Score"}
-                                                  options={this.state.sortFieldsTypes}
-                                                  onChange={this.handleSortField}>
-                                        </Dropdown>
-                                    </div>
-                                    <div className="col-md-3">
-                                        Order
-                                        <Dropdown value={"asc"}
-                                                  options={this.state.sortOrderTypes}
-                                                  onChange={this.handleSortOrder}
-                                        ></Dropdown>
-                                    </div>
-                                </div>
-                            </div>
-                            <Button type="submit" onClick={this.handleSubmit}
-                                    className="mt-2 btn"
-                                    style={submitBtnStyle}>Search</Button>&nbsp;&nbsp;
-                            <Button type="button" onClick={this.handleExport}
-                                    className="mt-2 btn btn-secondary">Export</Button>&nbsp;&nbsp;
-                            <FormCheck name="Debug" title="Debug" onChange={this.debugChanged}
-                                       label="Show Opensearch Query"/>
-                        </form>
+
                     </div>
 
                 </div>
                 <div style={searchResultsStyle} className={resultsWidth}>
-                    <pre
-                        style={searchHitsStyle}
-                        className="">{totalHits != null ? (searchDisplayQuery + totalHits + " results") : ""}</pre>
+                                <pre
+                                    style={searchHitsStyle}
+                                    className="">{totalHits != null ? (searchDisplayQuery + (totalHits === 10000 ? (totalHits + "+") : totalHits) + " results") : ""}</pre>
                     <hr className="my-1"/>
                     {(listItems != null && listItems.length > 0) ? listItems.map(item => (
 
@@ -919,8 +953,8 @@ class LoadDocuments extends React.Component {
                                         <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}
                                            data-doc-id={item.ID}>
                                             <div style={headingStyle}>
-                            <span
-                                style={idStyle}>{item.KCEXTERNALID}</span> <span
+                                <span
+                                    style={idStyle}>{item.KCEXTERNALID}</span> <span
                                                 dangerouslySetInnerHTML={{__html: item.KCTITLE}}/>
                                             </div>
                                         </a></div>
@@ -948,7 +982,8 @@ class LoadDocuments extends React.Component {
                     <div dangerouslySetInnerHTML={{__html: currentDocument}}/>
                 </div>
             </div>
-        </div>);
+        </div>)
+            ;
     }
 }
 

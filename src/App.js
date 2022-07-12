@@ -6,6 +6,7 @@ import {
     Route
 } from "react-router-dom";
 import Login from "./Login";
+import "@fontsource/roboto";
 
 function App() {
     return <Router>

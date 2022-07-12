@@ -1,334 +1,389 @@
 
-
 .tabbar {
-  margin: 10px;
+    margin: 10px;
 }
 
 .tabbar br {
-  display: none;
+    display: none;
 }
+
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .react-checkbox-tree {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-orient: horizontal;
-  -webkit-box-direction: reverse;
-  -ms-flex-direction: row-reverse;
-  flex-direction: row-reverse;
-  font-size: 14px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: reverse;
+    -ms-flex-direction: row-reverse;
+    flex-direction: row-reverse;
+    font-size: 14px;
 }
+
 .react-checkbox-tree > ol {
-  -webkit-box-flex: 1;
-  -ms-flex: 1 1 auto;
-  flex: 1 1 auto;
+    -webkit-box-flex: 1;
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto;
 }
+
 .react-checkbox-tree ol {
-  margin: 0;
-  padding-left: 0;
-  list-style-type: none;
+    margin: 0;
+    padding-left: 0;
+    list-style-type: none;
 }
+
 .react-checkbox-tree ol ol {
-  padding-left: 24px;
+    padding-left: 24px;
 }
+
 .react-checkbox-tree button {
-  line-height: normal;
-  color: inherit;
+    line-height: normal;
+    color: inherit;
 }
+
 .react-checkbox-tree button:disabled {
-  cursor: not-allowed;
+    cursor: not-allowed;
 }
+
 .react-checkbox-tree .rct-bare-label {
-  cursor: default;
+    cursor: default;
 }
+
 .react-checkbox-tree label {
-  margin-bottom: 0;
-  cursor: pointer;
+    margin-bottom: 0;
+    cursor: pointer;
 }
+
 .react-checkbox-tree label:hover {
-  background: rgba(51, 51, 204, 0.1);
+    background: rgba(51, 51, 204, 0.1);
 }
+
 .react-checkbox-tree label:active, .react-checkbox-tree label:focus {
-  background: rgba(51, 51, 204, 0.15);
+    background: rgba(51, 51, 204, 0.15);
 }
+
 .react-checkbox-tree:not(.rct-native-display) input {
-  display: none;
+    display: none;
 }
+
 .react-checkbox-tree.rct-native-display input {
-  margin: 0 5px;
+    margin: 0 5px;
 }
+
 .react-checkbox-tree .rct-icon {
-  display: inline-block;
-  text-align: center;
-  text-rendering: auto;
-  font-family: "Font Awesome 5 Free", "FontAwesome", sans-serif;
-  font-weight: normal;
-  font-variant: normal;
-  font-style: normal;
+    display: inline-block;
+    text-align: center;
+    text-rendering: auto;
+    font-family: "Font Awesome 5 Free", "FontAwesome", sans-serif;
+    font-weight: normal;
+    font-variant: normal;
+    font-style: normal;
 }
 
 .rct-disabled > .rct-text > label {
-  opacity: 0.75;
-  cursor: not-allowed;
+    opacity: 0.75;
+    cursor: not-allowed;
 }
+
 .rct-disabled > .rct-text > label:hover {
-  background: transparent;
+    background: transparent;
 }
+
 .rct-disabled > .rct-text > label:active {
-  background: transparent;
+    background: transparent;
 }
 
 .rct-text {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
 }
 
 .rct-options {
-  -webkit-box-flex: 0;
-  -ms-flex: 0 0 auto;
-  flex: 0 0 auto;
-  margin-left: 0.5rem;
-  text-align: right;
+    -webkit-box-flex: 0;
+    -ms-flex: 0 0 auto;
+    flex: 0 0 auto;
+    margin-left: 0.5rem;
+    text-align: right;
 }
 
 .rct-option {
-  opacity: 0.75;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  padding: 0 4px;
-  font-size: 18px;
+    opacity: 0.75;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    padding: 0 4px;
+    font-size: 18px;
 }
+
 .rct-option:hover {
-  opacity: 1;
+    opacity: 1;
 }
+
 .rct-option + .rct-option {
-  margin-left: 2px;
+    margin-left: 2px;
 }
 
 .rct-collapse,
 .rct-checkbox,
 .rct-node-icon {
-  padding: 0 5px;
+    padding: 0 5px;
 }
+
 .rct-collapse *,
 .rct-checkbox *,
 .rct-node-icon * {
-  display: inline-block;
-  margin: 0;
-  width: 14px;
+    display: inline-block;
+    margin: 0;
+    width: 14px;
 }
 
 .rct-collapse {
-  -ms-flex-item-align: stretch;
-  align-self: stretch;
-  border: 0;
-  background: none;
-  line-height: normal;
-  color: inherit;
-  font-size: 12px;
+    -ms-flex-item-align: stretch;
+    align-self: stretch;
+    border: 0;
+    background: none;
+    line-height: normal;
+    color: inherit;
+    font-size: 12px;
 }
+
 .rct-collapse.rct-collapse-btn {
-  cursor: pointer;
+    cursor: pointer;
 }
+
 .rct-collapse > .rct-icon-expand-close {
-  opacity: 0.5;
+    opacity: 0.5;
 }
+
 .rct-collapse > .rct-icon-expand-close:hover {
-  opacity: 1;
+    opacity: 1;
 }
 
 .rct-native-display .rct-checkbox {
-  display: none;
+    display: none;
 }
 
 .rct-node-clickable {
-  cursor: pointer;
+    cursor: pointer;
 }
+
 .rct-node-clickable:hover {
-  background: rgba(51, 51, 204, 0.1);
+    background: rgba(51, 51, 204, 0.1);
 }
+
 .rct-node-clickable:focus {
-  outline: 0;
-  background: rgba(51, 51, 204, 0.2);
+    outline: 0;
+    background: rgba(51, 51, 204, 0.2);
 }
 
 .rct-node-icon {
-  color: #33c;
+    color: #33c;
 }
 
 .rct-title {
-  padding: 0 5px;
+    padding: 0 5px;
 }
 
 .rct-icons-fa4 .rct-icon-expand-close::before {
-  content: "\f054";
+    content: "\f054";
 }
+
 .rct-icons-fa4 .rct-icon-expand-open::before {
-  content: "\f078";
+    content: "\f078";
 }
+
 .rct-icons-fa4 .rct-icon-uncheck::before {
-  content: "\f096";
+    content: "\f096";
 }
+
 .rct-icons-fa4 .rct-icon-check::before {
-  content: "\f046";
+    content: "\f046";
 }
+
 .rct-icons-fa4 .rct-icon-half-check::before {
-  opacity: 0.5;
-  content: "\f046";
+    opacity: 0.5;
+    content: "\f046";
 }
+
 .rct-icons-fa4 .rct-icon-leaf::before {
-  content: "\f016";
+    content: "\f016";
 }
+
 .rct-icons-fa4 .rct-icon-parent-open::before {
-  content: "\f115";
+    content: "\f115";
 }
+
 .rct-icons-fa4 .rct-icon-parent-close::before {
-  content: "\f114";
+    content: "\f114";
 }
+
 .rct-icons-fa4 .rct-icon-expand-all::before {
-  content: "\f0fe";
+    content: "\f0fe";
 }
+
 .rct-icons-fa4 .rct-icon-collapse-all::before {
-  content: "\f146";
+    content: "\f146";
 }
 
 .rct-icons-fa5 .rct-icon-expand-close::before {
-  font-weight: 900;
-  content: "\f054";
+    font-weight: 900;
+    content: "\f054";
 }
+
 .rct-icons-fa5 .rct-icon-expand-open::before {
-  font-weight: 900;
-  content: "\f078";
+    font-weight: 900;
+    content: "\f078";
 }
+
 .rct-icons-fa5 .rct-icon-uncheck::before {
-  content: "\f0c8";
+    content: "\f0c8";
 }
+
 .rct-icons-fa5 .rct-icon-check::before {
-  content: "\f14a";
+    content: "\f14a";
 }
+
 .rct-icons-fa5 .rct-icon-half-check::before {
-  opacity: 0.5;
-  content: "\f14a";
+    opacity: 0.5;
+    content: "\f14a";
 }
+
 .rct-icons-fa5 .rct-icon-leaf::before {
-  content: "\f15b";
+    content: "\f15b";
 }
+
 .rct-icons-fa5 .rct-icon-parent-open::before {
-  content: "\f07c";
+    content: "\f07c";
 }
+
 .rct-icons-fa5 .rct-icon-parent-close::before {
-  content: "\f07b";
+    content: "\f07b";
 }
+
 .rct-icons-fa5 .rct-icon-expand-all::before {
-  content: "\f0fe";
+    content: "\f0fe";
 }
+
 .rct-icons-fa5 .rct-icon-collapse-all::before {
-  content: "\f146";
+    content: "\f146";
 }
 
 .rct-direction-rtl {
-  direction: rtl;
+    direction: rtl;
 }
+
 .rct-direction-rtl ol ol {
-  padding-right: 24px;
-  padding-left: 0;
+    padding-right: 24px;
+    padding-left: 0;
 }
+
 .rct-direction-rtl.rct-icons-fa4 .rct-icon-expand-close::before {
-  content: "\f105";
+    content: "\f105";
 }
+
 .rct-direction-rtl.rct-icons-fa5 .rct-icon-expand-close::before {
-  content: "\f053";
+    content: "\f053";
 }
+
 .react-autosuggest__suggestions-container {
-  display: none;
-  color: #666ad1;
-  font-size: 14px;
-  margin: 5px;
-  position: fixed;
-  left: 0;
-  z-index: 999;
-  background-color: white;
-  border-radius: 5px;
-  min-width: 200px;
-  max-width: 250px;
-  border: 1px solid #666ad1cc;
-}
-.react-autosuggest__suggestions-container--open{
-  display: block;
+    display: none;
+    color: #41a4ff;
+    font-size: 14px;
+    margin-top: 5px;
+    position: absolute;
+    z-index: 999;
+    background-color: white;
+    border-radius: 5px;
+    min-width: 300px;
+    max-width: 400px;
+    border: 1px solid #41a4ff66;
 }
 
-.react-autosuggest__suggestions-list{
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
+.react-autosuggest__suggestions-container--open {
+    display: block;
 }
 
-.react-autosuggest__suggestion{
-  padding: 3px 6px;
+.react-autosuggest__suggestions-list {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
 }
 
-.react-autosuggest__suggestion--highlighted{
-  background: #3333cc22;
+.react-autosuggest__suggestion {
+    padding: 3px 6px;
 }
+
+.react-autosuggest__suggestion--highlighted {
+    background: #3333cc22;
+}
+
 .accordion {
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 2px;
+    border-radius: 8px;
+}
+.accordion__item {
+    margin: 5px;
+    border-radius: 8px;
+    border: 1px solid #ececec;
 }
 
-.accordion__item + .accordion__item {
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+.accordion__heading {
+    border: none;
+    border-radius: 8px;
 }
 
 .accordion__button {
-  background-color: #f8f8f8;
-  color: #666ad1;
-  cursor: pointer;
-  padding: 6px;
-  width: 100%;
-  text-align: left;
-  border: none;
+    cursor: pointer;
+    padding: 10px;
+    width: 100%;
+    text-align: left;
+    background: white;
+    border: 1px solid #41a4ff;
+    border-radius: 8px;
+    color: #555555;
 }
 
+
 .accordion__button:hover {
-  background-color: #ddd;
+    background-color: #41a4ff;
 }
 
 .accordion__button:before {
-  display: inline-block;
-  content: '';
-  height: 10px;
-  width: 10px;
-  margin-right: 12px;
-  border-bottom: 2px solid currentColor;
-  border-right: 2px solid currentColor;
-  transform: rotate(-45deg);
+    display: inline-block;
+    content: '';
+    height: 10px;
+    width: 10px;
+    margin-right: 12px;
+    border-bottom: 2px solid currentColor;
+    border-right: 2px solid currentColor;
+    transform: rotate(-45deg);
 }
 
 .accordion__button[aria-expanded='true']::before,
 .accordion__button[aria-selected='true']::before {
-  transform: rotate(45deg);
+    transform: rotate(45deg);
 }
 
 [hidden] {
-  display: none;
+    display: none;
 }
 
 .accordion__panel {
-  padding: 5px;
-  animation: fadein 0.35s ease-in;
+    margin: 8px;
+    padding: 8px;
+    animation: fadein 0.35s ease-in;
+    border-radius: 8px;
+    background: white;
 }
 
 /* -------------------------------------------------- */
@@ -336,11 +391,11 @@
 /* -------------------------------------------------- */
 
 @keyframes fadein {
-  0% {
-    opacity: 0;
-  }
+    0% {
+        opacity: 0;
+    }
 
-  100% {
-    opacity: 1;
-  }
+    100% {
+        opacity: 1;
+    }
 }
