@@ -461,7 +461,7 @@ class LoadDocuments extends React.Component {
                 listItems: [],
                 listLoaded: false,
                 totalHits: null,
-                searchDisplayQuery: "Microsite = " + (this.state.currentMicrosite) + "\nEntitlements = " + (this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root") + "\nSegments = " + (this.state.checkedEnterpriseSegments.length > 0 ? this.state.checkedEnterpriseSegments.join(",") : "NONE") + "\nProducts = " + (this.state.checkedProducts.length > 0 ? this.state.checkedProducts.join(",") : "NONE") + "\nQuery = " + (this.state.searchString ? this.state.searchString : "NONE") + "\nreturned "
+                searchDisplayQuery: ""// "Microsite = " + (this.state.currentMicrosite) + "\nEntitlements = " + (this.state.checkedEntitlements.length > 0 ? this.state.checkedEntitlements.join(",") : "SAL_root") + "\nSegments = " + (this.state.checkedEnterpriseSegments.length > 0 ? this.state.checkedEnterpriseSegments.join(",") : "NONE") + "\nProducts = " + (this.state.checkedProducts.length > 0 ? this.state.checkedProducts.join(",") : "NONE") + "\nQuery = " + (this.state.searchString ? this.state.searchString : "NONE") + "\nreturned "
             });
         }
         let documentIdMap = {
