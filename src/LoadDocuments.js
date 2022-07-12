@@ -543,6 +543,9 @@ class LoadDocuments extends React.Component {
                     if (result.status === 200) {
                         result.json().then(result => {
                             let validBuckets = result.buckets.filter(e => result.totalHits != 10000 && e.count >= 0.2 * result.totalHits && e.count <= 0.6 * result.totalHits).slice(0, 20);
+                            if (validBuckets.length === 0) {
+                                validBuckets = result.buckets.filter(e => result.totalHits != 10000 && e.count >= 0.1 * result.totalHits && e.count <= 0.8 * result.totalHits).slice(0, 20);
+                            }
                             this.setState({
                                 listLoaded: true,
                                 totalHits: result.totalHits,
@@ -740,6 +743,7 @@ class LoadDocuments extends React.Component {
                     <form onSubmit={this.handleSubmit}>
 
                         <table style={{width: '100%'}}>
+                            <tbody>
                             <tr>
                                 <td style={{width: '60%'}}>
                                     <Autosuggest
@@ -762,6 +766,7 @@ class LoadDocuments extends React.Component {
                                             className="mt-2 btn btn-secondary m-2">Export</Button>
                                 </td>
                             </tr>
+                            </tbody>
                         </table>
 
                     </form>
@@ -772,6 +777,20 @@ class LoadDocuments extends React.Component {
                     href="#"
                     onClick={this.logout}>Logout</a>
                 </div>
+                <Modal show={this.state.showProfile} onHide={() => this.handleUserProfileModal()}>
+                    <Modal.Header closeButton>User Profile</Modal.Header>
+                    <Modal.Body>
+                        <h4 style={nameStyle}>{userProfile.firstname} {userProfile.lastname}</h4>
+                        <h6>{userProfile.username}</h6>
+                        <br/>
+                        <b>Knowledge
+                            Panel</b> {this.state.microsites.map((t) => t['names']['LA_eng_US']).join(", ")}<br/>
+                        <b>Entitlements</b> {this.state.userAccessLevels.join(", ")}<br/>
+                        <b>Segments</b> {this.state.userSegments.join(", ")}<br/></Modal.Body>
+                    <Modal.Footer>
+                        <Button onClick={() => this.handleUserProfileModal()}>Close</Button>
+                    </Modal.Footer>
+                </Modal>
                 <div style={searchControlsStyle} className="col-lg-3">
                     <div className="container p-0">
 
