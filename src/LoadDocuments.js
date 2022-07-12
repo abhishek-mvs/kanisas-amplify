@@ -69,6 +69,7 @@ class LoadDocuments extends React.Component {
             debug: false
         };
         this.handleSearchChange = this.handleSearchChange.bind(this);
+        this.onKeyUp = this.onKeyUp.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleExport = this.handleExport.bind(this);
         this.loadList = this.loadList.bind(this);
@@ -129,6 +130,13 @@ class LoadDocuments extends React.Component {
 
     handleSearchChange(event) {
         this.setState({value: event.target.value, searchString: event.target.value});
+    }
+
+    onKeyUp(event) {
+        console.log("Key = " + event.key);
+        if (event.key === ' ') {
+            this.loadList(0);
+        }
     }
 
     openDocument(event) {
@@ -716,7 +724,7 @@ class LoadDocuments extends React.Component {
             cursor: 'pointer', margin: '0px', fontSize: '14px'
         }
         const idStyle = {
-            color: '#001970', fontWeight: 'bold'
+            color: '#001970', fontWeight: 'bold', fontSize : '14px'
         };
         const nameStyle = {
             color: '#001970', fontWeight: 'bold', textTransform: 'capitalize'
@@ -732,6 +740,7 @@ class LoadDocuments extends React.Component {
         const inputProps = {
             placeholder: 'Type a search word',
             onChange: this.handleSearchChange,
+            onKeyUp: this.onKeyUp,
             value
         };
 
@@ -972,9 +981,9 @@ class LoadDocuments extends React.Component {
                                         <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}
                                            data-doc-id={item.ID}>
                                             <div style={headingStyle}>
-                                <span
-                                    style={idStyle}>{item.KCEXTERNALID}</span> <span
-                                                dangerouslySetInnerHTML={{__html: item.KCTITLE}}/>
+                                <span style={idStyle}
+                                                dangerouslySetInnerHTML={{__html: item.KCTITLE}}/> <span
+                                                style={idStyle}>({item.KCEXTERNALID})</span>
                                             </div>
                                         </a></div>
                                     <div className="col-lg-1" style={iconsStyle}><a onClick={this.openJSON}
