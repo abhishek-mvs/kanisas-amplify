@@ -156,7 +156,11 @@ class LoadDocuments extends React.Component {
             .then((result) => {
                 if (result.status === 200) {
                     result.text().then((text) => {
-                        text = text.replace("#6699CC", "#303f9f")
+                        text = text.replace("{ background-color: #6699CC; font-size: 12px; color: #ffffff; font-weight: bold; }", "{ background-color: #41a4ff22; font-size: 14px; color: black; font-weight: bold; font-family : 'Roboto'}")
+                        text = text.replace(".date\t \t{font-size:12px;color:#FFFFFF;font-weight:normal;}", ".date\t \t{font-size:12px;color:black;font-weight:normal;}")
+                        text = text.replace(".date_bold \t{font-size:12px;color:#FFFFFF;font-weight:bold;}", ".date_bold \t{font-size:12px;color:black;font-weight:bold;}")
+                        text = text.replace(".document_title {font-size: 18px; color: #0E5899; font-weight: bold; }", ".document_title {font-size: 18px; color: #298ae5; font-weight: bold; }")
+                        text = text.replaceAll("viewdoc_tab.gif", "viewdoc_tab.png")
                         this.setState({
                             selectedDocumentID: docID,
                             currentDocument: text,
@@ -716,18 +720,17 @@ class LoadDocuments extends React.Component {
             textAlign: 'left',
             margin: '2px',
             padding: '5px 5px 5px 2px',
-            verticalAlign: 'top',
-            borderLeft: '3px solid #303f9f'
+            verticalAlign: 'top'
         };
 
         const headingStyle = {
             cursor: 'pointer', margin: '0px', fontSize: '14px'
         }
         const idStyle = {
-            color: '#001970', fontWeight: 'bold', fontSize : '14px'
+            color: '#298ae5', fontWeight: 'bold', fontSize : '14px'
         };
         const nameStyle = {
-            color: '#001970', fontWeight: 'bold', textTransform: 'capitalize'
+            color: '#298ae5', fontWeight: 'bold', textTransform: 'capitalize'
 
         };
         const descriptionStyle = {
@@ -1005,8 +1008,7 @@ class LoadDocuments extends React.Component {
                 </div>
                 <div style={documentViewStyle} className={documentWidth}
                 >
-                    <a onClick={this.closeSideWindow}><img
-                        src="img/delete.gif" height="20px"/></a>
+                    <a onClick={this.closeSideWindow}><i className="fa fa-times-circle" style={{color : '#298ae5', fontSize : '20px'}} /></a>
                     <div dangerouslySetInnerHTML={{__html: currentDocument}}/>
                 </div>
             </div>
