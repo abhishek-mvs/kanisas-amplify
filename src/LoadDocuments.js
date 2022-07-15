@@ -704,7 +704,7 @@ class LoadDocuments extends React.Component {
         }
         const selectedDocumentStyle = {
             textAlign: 'left', verticalAlign: 'top', padding: '6px',
-            margin: '0px 5px 25px 0px',
+            margin: '0px 5px 12px 0px',
             backgroundColor: '#41a4ff11',
             borderRadius: '5px'
         };
@@ -712,7 +712,7 @@ class LoadDocuments extends React.Component {
             textAlign: 'left',
             verticalAlign: 'top',
             padding: '6px',
-            margin: '0px 5px 25px 0px',
+            margin: '0px 5px 12px 0px',
         };
 
         const selectedDocumentHrStyle = {
@@ -753,7 +753,7 @@ class LoadDocuments extends React.Component {
         };
 
         return (<div>
-            <table style={{width: '100%', height: '100px', backgroundColor: '#41a4ff11'}}>
+            <table style={{width: '100%', height: '100px', backgroundColor: '#41a4ff33'}}>
                 <tbody>
                 <tr>
                     <td style={{width: '20%', padding: '20px'}}><img src="img/kiku_logo.png" style={{height: '40px'}}

@@ -10,7 +10,7 @@
 .search_results {
     overflow-y: auto;
     overflow-x: hidden;
-    max-height: calc(100vh - 150px);
+    max-height: calc(100vh - 102px);
 }
 
 ::-webkit-scrollbar {
