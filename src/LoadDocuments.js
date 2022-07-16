@@ -63,8 +63,6 @@ class LoadDocuments extends React.Component {
             searchString: '',
             selectedDocumentType: '',
             searchDisplayQuery: null,
-            resultsWidth: 'col-lg-8',
-            documentWidth: 'd-none',
             currentDocument: null,
             selectedDocumentID: -1,
             sortField: '',
@@ -170,9 +168,7 @@ class LoadDocuments extends React.Component {
                         text = text.replaceAll("viewdoc_tab.gif", "viewdoc_tab.png")
                         this.setState({
                             selectedDocumentID: docID,
-                            currentDocument: text,
-                            resultsWidth: 'col-lg-4',
-                            documentWidth: 'col-lg-4'
+                            currentDocument: text
                         })
                         this.searchResultsColumnRef.current.className = 'search_results_hide';
                         this.openDocumentColumnRef.current.className = 'open_document_show';
@@ -180,7 +176,7 @@ class LoadDocuments extends React.Component {
                 }
             }, (error) => {
                 this.setState({
-                    currentDocument: "", resultsWidth: 'col-lg-8', documentWidth: 'd-none', error
+                    currentDocument: "", error
                 });
             })
     }
@@ -208,15 +204,16 @@ class LoadDocuments extends React.Component {
                         let formattedJSON = '<pre>' + JSON.stringify(json, null, 2) + '</pre>';
                         this.setState({
                             selectedDocumentID: docId,
-                            currentDocument: formattedJSON,
-                            resultsWidth: 'col-lg-4',
-                            documentWidth: 'col-lg-4'
+                            currentDocument: formattedJSON
+                        }, () => {
+                            this.searchResultsColumnRef.current.className = 'search_results_hide';
+                            this.openDocumentColumnRef.current.className = 'open_document_show';
                         })
                     });
                 }
             }, (error) => {
                 this.setState({
-                    currentDocument: "", resultsWidth: 'col-lg-8', documentWidth: 'hidden-lg', error
+                    currentDocument: "", error
                 });
             })
     }
@@ -570,14 +567,18 @@ class LoadDocuments extends React.Component {
                                 buckets: validBuckets,
                                 listItems: this.state.listItems.concat(result.hits),
                                 loadedDocumentsCount: this.state.loadedDocumentsCount + result.hits.length
+                            }, () => {
+                                this.searchResultsColumnRef.current.className = 'search_results_show';
+                                this.openDocumentColumnRef.current.className = 'open_document_hide';
                             });
                             if (this.state.debug) {
                                 let formattedJSON = '<pre style="font-size: 11px">' + JSON.stringify({"query": result.query}, null, 2) + '</pre>';
                                 this.setState({
                                     selectedDocumentID: -1,
-                                    currentDocument: formattedJSON,
-                                    resultsWidth: 'col-lg-4',
-                                    documentWidth: 'col-lg-4'
+                                    currentDocument: formattedJSON
+                                }, () => {
+                                    this.searchResultsColumnRef.current.className = 'search_results_hide';
+                                    this.openDocumentColumnRef.current.className = 'open_document_show';
                                 })
                             }
                         });
@@ -681,8 +682,6 @@ class LoadDocuments extends React.Component {
             buckets,
             loadedDocumentsCount,
             searchDisplayQuery,
-            resultsWidth,
-            documentWidth,
             currentDocument,
             selectedDocumentID,
             suggestions,
