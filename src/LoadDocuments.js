@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useRef} from 'react';
 import Button from 'react-bootstrap/Button';
 import CheckboxTree from 'react-checkbox-tree';
 import Chips from 'react-chips'
@@ -15,8 +15,13 @@ import {
 import Cookies from "universal-cookie";
 
 class LoadDocuments extends React.Component {
+
     constructor(props) {
         super(props);
+        this.searchResultsColumnRef = React.createRef();
+        this.openDocumentColumnRef = React.createRef();
+        this.searchBoxRef = React.createRef();
+
         this.state = {
             autoSuggestionString: '',
             showProfile: false,
@@ -87,6 +92,7 @@ class LoadDocuments extends React.Component {
         this.onSuggestionSelected = this.onSuggestionSelected.bind(this);
         this.chooseMicrosite = this.chooseMicrosite.bind(this);
         this.chooseBucketKeyword = this.chooseBucketKeyword.bind(this);
+        this.clearSearch = this.clearSearch.bind(this);
         this.logout = this.logout.bind(this);
     }
 
@@ -133,7 +139,6 @@ class LoadDocuments extends React.Component {
     }
 
     onKeyUp(event) {
-        console.log("Key = " + event.key);
         if (event.key === ' ') {
             this.loadList(0);
         }
@@ -160,6 +165,8 @@ class LoadDocuments extends React.Component {
                         text = text.replace(".date\t \t{font-size:12px;color:#FFFFFF;font-weight:normal;}", ".date\t \t{font-size:12px;color:black;font-weight:normal;}")
                         text = text.replace(".date_bold \t{font-size:12px;color:#FFFFFF;font-weight:bold;}", ".date_bold \t{font-size:12px;color:black;font-weight:bold;}")
                         text = text.replace(".document_title {font-size: 18px; color: #0E5899; font-weight: bold; }", ".document_title {font-size: 18px; color: #298ae5; font-weight: bold; }")
+                        text = text.replace("body\t\t{font-family: Arial Unicode MS,verdana,helvetica,sans-serif;  margin: 0px 0px 0px 0px; font-size:12px;}", "")
+                        text = text.replace("select,option  { font-family: Arial Unicode MS,verdana,helvetica; font-size: 12px; font-weight: normal;};", "")
                         text = text.replaceAll("viewdoc_tab.gif", "viewdoc_tab.png")
                         this.setState({
                             selectedDocumentID: docID,
@@ -167,6 +174,8 @@ class LoadDocuments extends React.Component {
                             resultsWidth: 'col-lg-4',
                             documentWidth: 'col-lg-4'
                         })
+                        this.searchResultsColumnRef.current.className = 'search_results_hide';
+                        this.openDocumentColumnRef.current.className = 'open_document_show';
                     });
                 }
             }, (error) => {
@@ -178,9 +187,8 @@ class LoadDocuments extends React.Component {
 
     closeSideWindow(event) {
         event.preventDefault();
-        this.setState({
-            selectedDocumentID: -1, currentDocument: "", resultsWidth: 'col-lg-8', documentWidth: 'hidden-lg'
-        });
+        this.searchResultsColumnRef.current.className = 'search_results_show';
+        this.openDocumentColumnRef.current.className = 'open_document_hide';
     }
 
     openJSON(event) {
@@ -316,7 +324,6 @@ class LoadDocuments extends React.Component {
                                 selectedSegmentsNodes.push(segment);
                             }
                         }
-                        console.log("Segment Summary Map " + JSON.stringify(segmentSummaryMap));
                         for (let j = 0; j < result.length; j++) {
                             let enterpriseSegmentKey = result[j].value;
                             let enterpriseSegmentPrefix = enterpriseSegmentKey.substring(0, enterpriseSegmentKey.indexOf("_"));
@@ -440,7 +447,6 @@ class LoadDocuments extends React.Component {
                 result.json().then(result => {
                     if (this.state.autoSuggestionString !== autoSuggestionString) return;
                     let nodesTemp = result.map(concept => {
-                        console.log(concept);
                         return {
                             value: concept, label: concept
                         };
@@ -622,15 +628,33 @@ class LoadDocuments extends React.Component {
     getSuggestionValue = suggestion => suggestion.name;
 
     renderSuggestion = suggestion => (
-        <span>{suggestion.label}</span>
+        <div style={{padding: '2px', fontSize: '16px'}}>{suggestion.label}</div>
     );
 
+    clearSearch() {
+        this.setState({value: '', searchString: ''}, () => {
+            this.searchBoxRef.current.focus();
+        });
+
+    }
+
     renderInputComponent = inputProps => (
-        <div>
-            <input type="text" {...inputProps}
-                   className="form-control"
-                   autoComplete="off"
-                   id="search"/>
+        <div className="form-control p-1">
+            <table style={{width: '100%', backgroundColor: 'white'}}>
+                <tbody>
+                <tr>
+                    <td style={{width: '100%'}}><input type="search" {...inputProps}
+                                                       autoComplete="off"
+                                                       ref={this.searchBoxRef}
+                                                       className="search_input"
+                                                       id="search"/></td>
+                    <td style={{textAlign: 'right'}}><a style={{color: '#dddddd'}} onClick={this.clearSearch}
+                                                        className="clear_search"><i
+                        className="fa fa-times-circle"/></a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
         </div>
     );
 
@@ -679,21 +703,13 @@ class LoadDocuments extends React.Component {
             textDecorationStyle: 'underline'
         };
 
-        const searchHitsStyle = {
-            color: '#41a4ff', fontSize: '14px', fontWeight: 'bold', lineHeight: '120%', margin: '5px',
-            fontFamily: 'Roboto'
-        };
-        const submitBtnStyle = {
-            backgroundColor: '#41a4ff', color: 'white', borderColor: '#41a4ff'
-        };
         const searchControlsStyle = {
             textAlign: 'left',
             margin: '0px',
             padding: '0px',
             verticalAlign: 'top',
-            fontSize: '14px',
-            height: '100%',
-            width: '20%'
+            fontSize: '16px',
+            height: '100%'
         };
         const iconsStyle = {
             padding: '0px 5px', cursor: 'pointer'
@@ -703,7 +719,7 @@ class LoadDocuments extends React.Component {
             fontSize: '14px', fontFamily: 'Roboto'
         }
         const selectedDocumentStyle = {
-            textAlign: 'left', verticalAlign: 'top', padding: '6px',
+            textAlign: 'left', verticalAlign: 'top', padding: '12px',
             margin: '0px 5px 12px 0px',
             backgroundColor: '#41a4ff11',
             borderRadius: '5px'
@@ -711,17 +727,13 @@ class LoadDocuments extends React.Component {
         const documentStyle = {
             textAlign: 'left',
             verticalAlign: 'top',
-            padding: '6px',
+            padding: '12px',
             margin: '0px 5px 12px 0px',
+            wordBreak: 'break-all'
         };
-
-        const selectedDocumentHrStyle = {
-            color: 'white'
-        };
-        const documentHrStyle = {};
 
         const searchResultsStyle = {
-            textAlign: 'left', margin: '0px', padding: '0px', verticalAlign: 'top', width: '40%'
+            textAlign: 'left', margin: '0px', padding: '0px', verticalAlign: 'top'
         };
         const documentViewStyle = {
             textAlign: 'left',
@@ -753,275 +765,343 @@ class LoadDocuments extends React.Component {
         };
 
         return (<div>
-            <table style={{width: '100%', height: '100px', backgroundColor: '#41a4ff33'}}>
-                <tbody>
-                <tr>
-                    <td style={{width: '20%', padding: '20px'}}><img src="img/kiku_logo.png" style={{height: '40px'}}
-                                                                     alt="Kiku Logo"/></td>
-                    <td style={{width: '65%'}}>
-                        <form onSubmit={this.handleSubmit}>
+                <table style={{width: '100%', height: '100px', backgroundColor: '#41a4ff33'}}
+                       className="header_desktop">
+                    <tbody>
+                    <tr>
+                        <td style={{width: '20%', padding: '20px'}}><img src="img/kiku_logo.png"
+                                                                         style={{height: '40px'}}
+                                                                         alt="Kiku Logo"/></td>
+                        <td style={{width: '65%'}}>
+                            <form onSubmit={this.handleSubmit}>
 
-                            <table style={{width: '100%'}}>
-                                <tbody>
-                                <tr>
-                                    <td style={{width: '60%'}}>
-                                        <Autosuggest
-                                            suggestions={suggestions}
-                                            onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
-                                            onSuggestionsClearRequested={this.onSuggestionsClearRequested}
-                                            getSuggestionValue={this.getSuggestionValue}
-                                            renderSuggestion={this.renderSuggestion}
-                                            renderInputComponent={this.renderInputComponent}
-                                            renderSuggestionsContainer={this.renderSuggestionsContainer}
-                                            onSuggestionSelected={this.onSuggestionSelected}
-                                            inputProps={inputProps}
-                                        />
-                                    </td>
-                                    <td>
-                                        <Button type="submit" onClick={this.handleSubmit}
-                                                className="mt-2 btn m-2"
-                                                style={submitBtnStyle}>Search</Button>
-                                        <Button type="button" onClick={this.handleExport}
-                                                className="mt-2 btn btn-secondary m-2">Export</Button>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
+                                <table style={{width: '100%'}}>
+                                    <tbody>
+                                    <tr>
+                                        <td style={{width: '60%'}}>
+                                            <Autosuggest
+                                                suggestions={suggestions}
+                                                onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
+                                                onSuggestionsClearRequested={this.onSuggestionsClearRequested}
+                                                getSuggestionValue={this.getSuggestionValue}
+                                                renderSuggestion={this.renderSuggestion}
+                                                renderInputComponent={this.renderInputComponent}
+                                                renderSuggestionsContainer={this.renderSuggestionsContainer}
+                                                onSuggestionSelected={this.onSuggestionSelected}
+                                                inputProps={inputProps}
+                                            />
+                                        </td>
+                                        <td>
+                                            <Button type="submit" onClick={this.handleSubmit}
+                                                    className="mt-2 btn m-2 submit_button"
+                                            >Search</Button>
+                                            <Button type="button" onClick={this.handleExport}
+                                                    className="mt-2 btn btn-secondary m-2">Export</Button>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
 
-                        </form>
-                    </td>
-                    <td style={{textAlign: 'right', padding: '8px'}}>
-                        <h6 style={nameStyle}>{userProfile.firstname} {userProfile.lastname}</h6>
-                        <a href="#" onClick={() => this.handleUserProfileModal()}>Profile</a> | <a
-                        href="#"
-                        onClick={this.logout}>Logout</a>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-            <Modal show={this.state.showProfile} onHide={() => this.handleUserProfileModal()}>
-                <Modal.Header closeButton>User Profile</Modal.Header>
-                <Modal.Body>
-                    <h4 style={nameStyle}>{userProfile.firstname} {userProfile.lastname}</h4>
-                    <h6>{userProfile.username}</h6>
-                    <br/>
-                    <b>Knowledge
-                        Panel</b> {this.state.microsites.map((t) => t['names']['LA_eng_US']).join(", ")}<br/>
-                    <b>Entitlements</b> {this.state.userAccessLevels.join(", ")}<br/>
-                    <b>Segments</b> {this.state.userSegments.join(", ")}<br/></Modal.Body>
-                <Modal.Footer>
-                    <Button onClick={() => this.handleUserProfileModal()}>Close</Button>
-                </Modal.Footer>
-            </Modal>
-            <table style={{width: '100%'}}>
-                <tbody>
-                <tr>
-                    <td style={searchControlsStyle}><Accordion allowZeroExpanded={true} allowMultipleExpanded={true}
-                                                               preExpanded={['suggestions']}>
-                        {buckets.length !== 0 ? <AccordionItem uuid='suggestions'>
-                            <AccordionItemHeading>
-                                <AccordionItemButton>
-                                    Suggestions
-                                </AccordionItemButton>
-                            </AccordionItemHeading>
-                            <AccordionItemPanel>
-                                <div style={{backgroundColor: 'white'}}>
-                                    {buckets.map(bucket =>
-                                        <div style={bucketKeyStyle}>
-                                            <a
-                                                key={bucket.key}
-                                                data-bucket-key={bucket.key}
-                                                onClick={this.chooseBucketKeyword}>{bucket.key} ({bucket.count})</a>
-                                        </div>)}
-                                </div>
+                            </form>
+                        </td>
+                        <td style={{textAlign: 'right', padding: '8px'}}>
+                            <h6 style={nameStyle}>{userProfile.firstname} {userProfile.lastname}</h6>
+                            <a href="#" onClick={() => this.handleUserProfileModal()}>Profile</a> | <a
+                            href="#"
+                            onClick={this.logout}>Logout</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <table style={{width: '100%', backgroundColor: '#41a4ff33'}} className="header_mobile">
+                    <tbody>
+                    <tr>
+                        <td style={{width: '40%', padding: '15px'}}><img src="img/kiku_logo.png"
+                                                                         style={{height: '20px'}}
+                                                                         alt="Kiku Logo"/></td>
+                        <td style={{textAlign: 'right', padding: '6px', width: '60%'}}>
+                            <h6 style={nameStyle}>{userProfile.firstname} {userProfile.lastname}</h6>
+                            <a href="#" onClick={() => this.handleUserProfileModal()}>Profile</a> | <a
+                            href="#"
+                            onClick={this.logout}>Logout</a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colSpan={2}>
+                            <form onSubmit={this.handleSubmit}>
 
-                            </AccordionItemPanel>
-                        </AccordionItem> : <span></span>}
-                        <AccordionItem>
-                            <AccordionItemHeading>
-                                <AccordionItemButton>
-                                    Knowledge Group
-                                </AccordionItemButton>
-                            </AccordionItemHeading>
-                            <AccordionItemPanel>
-                                {microsites.map(item =>
-                                    <a
-                                        key={item.id}
-                                        style={(item.id === currentMicrosite) ? selectedMicrositeStyle : micrositeStyle}
-                                        onClick={this.chooseMicrosite}
-                                        data-microsite-id={item.id}>{item.names['LA_eng_US']} &nbsp;</a>)}
-                            </AccordionItemPanel>
-                        </AccordionItem>
-                        <AccordionItem>
-                            <AccordionItemHeading>
-                                <AccordionItemButton>
-                                    Languages
-                                </AccordionItemButton>
-                            </AccordionItemHeading>
-                            <AccordionItemPanel>
-                                Search from
-                                <Dropdown value={"All languages"}
-                                          options={this.state.languageSelectionTypes}
-                                          onChange={this.handleLanguageSelectionType}
-                                ></Dropdown>
-                                Select Languages
-                                <div style={entitlementStyle}
-                                     className="border rounded">
-                                    <CheckboxTree
-                                        iconsClass="fa5"
-                                        showNodeIcon={false}
-                                        nodes={this.state.documentLanguages}
-                                        checked={this.state.checkedDocumentLanguages}
-                                        expanded={this.state.expandedDocumentLanguages}
-                                        onCheck={checked => this.setState({checkedDocumentLanguages: checked})}
-                                        onExpand={expanded => this.setState({expandedDocumentLanguages: expanded})}
-                                    />
-                                </div>
-                                Edition Languages
-                                <div style={entitlementStyle}
-                                     className="border rounded">
-                                    <CheckboxTree
-                                        iconsClass="fa5"
-                                        showNodeIcon={false}
-                                        nodes={this.state.editionLanguages}
-                                        checked={this.state.checkedEditionLanguages}
-                                        expanded={this.state.expandedEditionLanguages}
-                                        onCheck={checked => this.setState({checkedEditionLanguages: checked})}
-                                        onExpand={expanded => this.setState({expandedEditionLanguages: expanded})}
-                                    />
-                                </div>
-                            </AccordionItemPanel>
-                        </AccordionItem>
-                        <AccordionItem>
-                            <AccordionItemHeading>
-                                <AccordionItemButton>
-                                    Segment Metadata
-                                </AccordionItemButton>
-                            </AccordionItemHeading>
-                            <AccordionItemPanel>
-                                <div style={{display: 'none'}}>
-                                    Entitlements
+                                <table style={{width: '100%'}}>
+                                    <tbody>
+                                    <tr>
+                                        <td style={{width: '80%', paddingLeft : '5px'}}>
+                                            <Autosuggest
+                                                suggestions={suggestions}
+                                                onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
+                                                onSuggestionsClearRequested={this.onSuggestionsClearRequested}
+                                                getSuggestionValue={this.getSuggestionValue}
+                                                renderSuggestion={this.renderSuggestion}
+                                                renderInputComponent={this.renderInputComponent}
+                                                renderSuggestionsContainer={this.renderSuggestionsContainer}
+                                                onSuggestionSelected={this.onSuggestionSelected}
+                                                inputProps={inputProps}
+                                            />
+                                        </td>
+                                        <td>
+                                            <Button type="submit" onClick={this.handleSubmit}
+                                                    className="mt-1 btn m-1 submit_button"
+                                            ><i className="fa fa-search"></i></Button>
+
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <Modal show={this.state.showProfile} onHide={() => this.handleUserProfileModal()}>
+                    <Modal.Header closeButton>User Profile</Modal.Header>
+                    <Modal.Body>
+                        <h4 style={nameStyle}>{userProfile.firstname} {userProfile.lastname}</h4>
+                        <h6>{userProfile.username}</h6>
+                        <br/>
+                        <b>Knowledge
+                            Panel</b> {this.state.microsites.map((t) => t['names']['LA_eng_US']).join(", ")}<br/>
+                        <b>Entitlements</b> {this.state.userAccessLevels.join(", ")}<br/>
+                        <b>Segments</b> {this.state.userSegments.join(", ")}<br/></Modal.Body>
+                    <Modal.Footer>
+                        <Button onClick={() => this.handleUserProfileModal()}>Close</Button>
+                    </Modal.Footer>
+                </Modal>
+                <table style={{width: '100%'}}>
+                    <tbody>
+                    <tr>
+                        <td style={searchControlsStyle} id="search_controls_column"><Accordion allowZeroExpanded={true}
+                                                                                               allowMultipleExpanded={true}
+                                                                                               preExpanded={['suggestions']}>
+                            {buckets.length !== 0 ? <AccordionItem uuid='suggestions'>
+                                <AccordionItemHeading>
+                                    <AccordionItemButton>
+                                        Suggestions
+                                    </AccordionItemButton>
+                                </AccordionItemHeading>
+                                <AccordionItemPanel>
+                                    <div style={{backgroundColor: 'white'}}>
+                                        {buckets.map(bucket =>
+                                            <div style={bucketKeyStyle}>
+                                                <a
+                                                    key={bucket.key}
+                                                    data-bucket-key={bucket.key}
+                                                    onClick={this.chooseBucketKeyword}>{bucket.key} ({bucket.count})</a>
+                                            </div>)}
+                                    </div>
+
+                                </AccordionItemPanel>
+                            </AccordionItem> : <span></span>}
+                            <AccordionItem>
+                                <AccordionItemHeading>
+                                    <AccordionItemButton>
+                                        Knowledge Group
+                                    </AccordionItemButton>
+                                </AccordionItemHeading>
+                                <AccordionItemPanel>
+                                    {microsites.map(item =>
+                                        <a
+                                            key={item.id}
+                                            style={(item.id === currentMicrosite) ? selectedMicrositeStyle : micrositeStyle}
+                                            onClick={this.chooseMicrosite}
+                                            data-microsite-id={item.id}>{item.names['LA_eng_US']} &nbsp;</a>)}
+                                </AccordionItemPanel>
+                            </AccordionItem>
+                            <AccordionItem>
+                                <AccordionItemHeading>
+                                    <AccordionItemButton>
+                                        Languages
+                                    </AccordionItemButton>
+                                </AccordionItemHeading>
+                                <AccordionItemPanel>
+                                    Search from
+                                    <Dropdown value={"All languages"}
+                                              options={this.state.languageSelectionTypes}
+                                              onChange={this.handleLanguageSelectionType}
+                                    ></Dropdown>
+                                    Select Languages
                                     <div style={entitlementStyle}
                                          className="border rounded">
                                         <CheckboxTree
                                             iconsClass="fa5"
                                             showNodeIcon={false}
-                                            nodes={this.state.entitlementNodes}
-                                            checked={this.state.checkedEntitlements}
-                                            expanded={this.state.expandedEntitlements}
-                                            onCheck={checked => this.setState({checkedEntitlements: checked})}
-                                            onExpand={expanded => this.setState({expandedEntitlements: expanded})}
+                                            nodes={this.state.documentLanguages}
+                                            checked={this.state.checkedDocumentLanguages}
+                                            expanded={this.state.expandedDocumentLanguages}
+                                            onCheck={checked => this.setState({checkedDocumentLanguages: checked})}
+                                            onExpand={expanded => this.setState({expandedDocumentLanguages: expanded})}
                                         />
                                     </div>
-                                </div>
-                                Segments
-                                <div style={entitlementStyle}
-                                     className="border rounded">
-                                    <CheckboxTree
-                                        iconsClass="fa5"
-                                        showNodeIcon={false}
-                                        nodes={this.state.enterpriseSegmentsNodes}
-                                        checked={this.state.checkedEnterpriseSegments}
-                                        expanded={this.state.expandedEnterpriseSegments}
-                                        onCheck={checked => this.setState({checkedEnterpriseSegments: checked})}
-                                        onExpand={expanded => this.setState({expandedEnterpriseSegments: expanded})}
-                                    />
-                                </div>
-                                Document Type
-                                <div
-                                    className="border rounded">
-                                    <Dropdown
-                                        options={this.state.documentTypes}
-                                        onChange={this.handleDocumentTypeChange}
-                                    />
-                                </div>
-                                Products
-                                <div style={chipsStyle}>
-                                    <Chips
-                                        value={this.state.checkedProducts}
-                                        onChange={this.onProductsChange}
-                                        suggestions={this.state.productNodes}
-                                        className="form-control form-control-lg"
-                                        fromSuggestionsOnly={true}
-                                    /></div>
-                            </AccordionItemPanel>
-                        </AccordionItem>
-                        <AccordionItem>
-                            <AccordionItemHeading>
-                                <AccordionItemButton>
-                                    Others
-                                </AccordionItemButton>
-                            </AccordionItemHeading>
-                            <AccordionItemPanel>
-                                <FormCheck name="Debug" title="Debug" onChange={this.debugChanged}
-                                           label="Show Opensearch Query"/>
-                            </AccordionItemPanel>
-                        </AccordionItem>
-                    </Accordion>
-                    </td>
-                    <td style={searchResultsStyle}>
-                        <div className="search_results">
-                            <table style={{width: '100%'}}>
-                                <tbody>
-                                <tr>
-                                    <td style={{width: '50%'}}><pre
-                                        style={searchHitsStyle}
-                                        className="">{totalHits != null ? (searchDisplayQuery + (totalHits === 10000 ? (totalHits + "+") : totalHits) + " results") : ""}</pre>
-                                    </td>
-                                    <td style={{width: '50%', textAlign: 'right', padding: '5px', visibility : (totalHits != null && totalHits > 0) ? 'visible' : 'hidden'}}
-                                                             className="sort_by">
-                                        <Dropdown
-                                            value={"Relevance"}
-                                            baseClassName="InlineDropdown"
-                                            options={this.state.sortFieldsTypes}
-                                            onChange={this.handleSortField}/>
-                                        <Dropdown value={"asc"} baseClassName="InlineDropdown"
-                                                  options={this.state.sortOrderTypes}
-                                                  onChange={this.handleSortOrder}
-                                        /></td>
-                                </tr>
-                                </tbody>
-                            </table>
-
-                            {(listItems != null && listItems.length > 0) ? listItems.map(item => (
-
-                                <div key={item.ID}
-                                     style={item.ID === selectedDocumentID ? selectedDocumentStyle : documentStyle}>
-                                    <div className="container p-0">
-                                        <div className="row">
-                                            <div className="col-lg-11">
-                                                <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}
-                                                   data-doc-id={item.ID}>
-                                                    <div style={headingStyle}>
-                                <span style={idStyle}
-                                      dangerouslySetInnerHTML={{__html: item.KCTITLE}}/> <span
-                                                        style={idStyle}>({item.KCEXTERNALID})</span>
-                                                    </div>
-                                                </a></div>
-                                            <div className="col-lg-1" style={iconsStyle}><a onClick={this.openJSON}
-                                                                                            data-doc-id={item.ID}><img
-                                                src="img/knowledge.png" height="20px"/>
-                                            </a></div>
+                                    Edition Languages
+                                    <div style={entitlementStyle}
+                                         className="border rounded">
+                                        <CheckboxTree
+                                            iconsClass="fa5"
+                                            showNodeIcon={false}
+                                            nodes={this.state.editionLanguages}
+                                            checked={this.state.checkedEditionLanguages}
+                                            expanded={this.state.expandedEditionLanguages}
+                                            onCheck={checked => this.setState({checkedEditionLanguages: checked})}
+                                            onExpand={expanded => this.setState({expandedEditionLanguages: expanded})}
+                                        />
+                                    </div>
+                                </AccordionItemPanel>
+                            </AccordionItem>
+                            <AccordionItem>
+                                <AccordionItemHeading>
+                                    <AccordionItemButton>
+                                        Segment Metadata
+                                    </AccordionItemButton>
+                                </AccordionItemHeading>
+                                <AccordionItemPanel>
+                                    <div style={{display: 'none'}}>
+                                        Entitlements
+                                        <div style={entitlementStyle}
+                                             className="border rounded">
+                                            <CheckboxTree
+                                                iconsClass="fa5"
+                                                showNodeIcon={false}
+                                                nodes={this.state.entitlementNodes}
+                                                checked={this.state.checkedEntitlements}
+                                                expanded={this.state.expandedEntitlements}
+                                                onCheck={checked => this.setState({checkedEntitlements: checked})}
+                                                onExpand={expanded => this.setState({expandedEntitlements: expanded})}
+                                            />
                                         </div>
                                     </div>
-
+                                    Segments
+                                    <div style={entitlementStyle}
+                                         className="border rounded">
+                                        <CheckboxTree
+                                            iconsClass="fa5"
+                                            showNodeIcon={false}
+                                            nodes={this.state.enterpriseSegmentsNodes}
+                                            checked={this.state.checkedEnterpriseSegments}
+                                            expanded={this.state.expandedEnterpriseSegments}
+                                            onCheck={checked => this.setState({checkedEnterpriseSegments: checked})}
+                                            onExpand={expanded => this.setState({expandedEnterpriseSegments: expanded})}
+                                        />
+                                    </div>
+                                    Document Type
                                     <div
-                                        style={descriptionStyle}> <span
-                                        dangerouslySetInnerHTML={{__html: item.CONTENT}}/></div>
+                                        className="border rounded">
+                                        <Dropdown
+                                            options={this.state.documentTypes}
+                                            onChange={this.handleDocumentTypeChange}
+                                        />
+                                    </div>
+                                    Products
+                                    <div style={chipsStyle}>
+                                        <Chips
+                                            value={this.state.checkedProducts}
+                                            onChange={this.onProductsChange}
+                                            suggestions={this.state.productNodes}
+                                            className="form-control form-control-lg"
+                                            fromSuggestionsOnly={true}
+                                        /></div>
+                                </AccordionItemPanel>
+                            </AccordionItem>
+                            <AccordionItem>
+                                <AccordionItemHeading>
+                                    <AccordionItemButton>
+                                        Others
+                                    </AccordionItemButton>
+                                </AccordionItemHeading>
+                                <AccordionItemPanel>
+                                    <FormCheck name="Debug" title="Debug" onChange={this.debugChanged}
+                                               label="Show Opensearch Query"/>
+                                </AccordionItemPanel>
+                            </AccordionItem>
+                        </Accordion>
+                        </td>
+                        <td style={searchResultsStyle} ref={this.searchResultsColumnRef}>
+                            <div className="search_results">
+                                <table style={{width: '100%'}}>
+                                    <tbody>
+                                    <tr>
+                                        <td style={{width: '30%'}}>
+                                            <pre
+                                                className="results_count">{totalHits != null ? (searchDisplayQuery + (totalHits === 10000 ? (totalHits + "+") : totalHits) + " results") : ""}</pre>
+                                        </td>
+                                        <td style={{
+                                            width: '70%',
+                                            textAlign: 'right',
+                                            padding: '5px',
+                                            visibility: (totalHits != null && totalHits > 0) ? 'visible' : 'hidden'
+                                        }}
+                                            className="sort_by">
+                                            <Dropdown
+                                                value={"Relevance"}
+                                                baseClassName="InlineDropdown"
+                                                options={this.state.sortFieldsTypes}
+                                                onChange={this.handleSortField}/>
+                                            <Dropdown value={"asc"} baseClassName="InlineDropdown"
+                                                      options={this.state.sortOrderTypes}
+                                                      onChange={this.handleSortOrder}
+                                            /></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
 
-                                </div>)) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
-                            {totalHits > loadedDocumentsCount ?
-                                <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}</div>
-                    </td>
-                    <td style={documentViewStyle}>
-                        <div className="search_results">
-                            <div dangerouslySetInnerHTML={{__html: currentDocument}}/>
-                        </div>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>);
+                                {(listItems != null && listItems.length > 0) ? listItems.map(item => (
+
+                                    <div key={item.ID}
+                                         style={item.ID === selectedDocumentID ? selectedDocumentStyle : documentStyle}>
+                                        <div className="container-fluid p-0">
+                                            <div className="row">
+                                                <div className="col-lg-11" style={{textAlign : 'left'}}>
+                                                    <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}
+                                                       data-doc-id={item.ID}>
+                                                        <div style={headingStyle}>
+                                <span style={idStyle}
+                                      dangerouslySetInnerHTML={{__html: item.KCTITLE}}/> <span
+                                                            style={idStyle}>({item.KCEXTERNALID})</span>
+                                                        </div>
+                                                    </a></div>
+                                                <div className="col-lg-1 show_in_desktop" style={iconsStyle}><a onClick={this.openJSON}
+                                                                                                 data-doc-id={item.ID}><img
+                                                    src="img/knowledge.png" height="20px"/>
+                                                </a></div>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            style={descriptionStyle}> <span
+                                            dangerouslySetInnerHTML={{__html: item.CONTENT}}/></div>
+
+                                    </div>)) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
+                                {totalHits > loadedDocumentsCount ?
+                                    <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}</div>
+                        </td>
+                        <td style={documentViewStyle} ref={this.openDocumentColumnRef} className="open_document_hide">
+                            <div className="open_document">
+                                <div className="open_document_controls">
+                                    <a style={{
+                                        fontSize: '16px',
+                                        fontFamily: 'Roboto',
+                                        padding: '8px',
+                                        textDecorationStyle: 'underline'
+                                    }} onClick={this.closeSideWindow}><span className="show_in_mobile"><i
+                                        className="fa fa-arrow-left"/> Search Results</span><span
+                                        className="show_in_desktop"><i className="fa fa-times-circle"/> Close</span>
+                                    </a>
+                                </div>
+                                <div dangerouslySetInnerHTML={{__html: currentDocument}}/>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        );
     }
 }
 
