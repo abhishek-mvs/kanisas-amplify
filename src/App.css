@@ -635,7 +635,7 @@
     }
 
     .open_document_show {
-        display: block;
+        display: table;
         width: 100%;
     }
 
