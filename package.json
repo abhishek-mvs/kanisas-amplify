@@ -12,6 +12,7 @@
     "react-bootstrap": "^2.4.0",
     "react-checkbox-tree": "^1.7.3",
     "react-chips": "^0.8.0",
+    "react-closeable-tabs": "^1.1.5",
     "react-doc": "^1.2.6",
     "react-dom": "^16.14.0",
     "react-dropdown": "^1.10.0",

@@ -593,6 +593,16 @@
     padding-left: 10px;
 }
 
+.document_tabs {
+}
+
+.document_tab_panel {
+}
+
+.document_tabs > .document_tab_panel div.tab.active{
+    border-bottom: 3px solid #298ae5;
+}
+
 @media only screen and (max-width: 800px) {
     .header_desktop {
         display: none;
@@ -655,4 +665,7 @@
         display: block;
     }
 
+    .document_tabs > .document_tab_panel div.tab{
+        font-size: 12px;
+    }
 }

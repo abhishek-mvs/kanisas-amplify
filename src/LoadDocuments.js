@@ -13,6 +13,7 @@ import {
     Accordion, AccordionItem, AccordionItemButton, AccordionItemHeading, AccordionItemPanel,
 } from 'react-accessible-accordion';
 import Cookies from "universal-cookie";
+import CloseableTabs from 'react-closeable-tabs';
 
 class LoadDocuments extends React.Component {
 
@@ -31,6 +32,8 @@ class LoadDocuments extends React.Component {
             userAccessLevels: [],
             currentMicrosite: '',
             buckets: [],
+            activeIndex: 0,
+            tabs: [],
             checkedEntitlements: [],
             expandedEntitlements: ['Entitlements'],
             entitlementNodes: [],
@@ -63,7 +66,6 @@ class LoadDocuments extends React.Component {
             searchString: '',
             selectedDocumentType: '',
             searchDisplayQuery: null,
-            currentDocument: null,
             selectedDocumentID: -1,
             sortField: '',
             value: '',
@@ -92,6 +94,7 @@ class LoadDocuments extends React.Component {
         this.chooseBucketKeyword = this.chooseBucketKeyword.bind(this);
         this.clearSearch = this.clearSearch.bind(this);
         this.logout = this.logout.bind(this);
+        this.addTab = this.addTab.bind(this);
     }
 
     chooseMicrosite(event) {
@@ -166,10 +169,8 @@ class LoadDocuments extends React.Component {
                         text = text.replace("body\t\t{font-family: Arial Unicode MS,verdana,helvetica,sans-serif;  margin: 0px 0px 0px 0px; font-size:12px;}", "")
                         text = text.replace("select,option  { font-family: Arial Unicode MS,verdana,helvetica; font-size: 12px; font-weight: normal;};", "")
                         text = text.replaceAll("viewdoc_tab.gif", "viewdoc_tab.png")
-                        this.setState({
-                            selectedDocumentID: docID,
-                            currentDocument: text
-                        })
+
+                        this.addTab(docID, text, docID);
                         this.searchResultsColumnRef.current.className = 'search_results_hide';
                         this.openDocumentColumnRef.current.className = 'open_document_show';
                     });
@@ -181,8 +182,31 @@ class LoadDocuments extends React.Component {
             })
     }
 
+    addTab(selectedDocumentID, text, docID) {
+        let newTabs = this.state.tabs;
+        const id = new Date().valueOf();
+        console.log("New Tabs before add ");
+        newTabs.map((value) => console.log(value.id + " " + value.tab));
+        newTabs = newTabs.filter(item => item.tab !== docID);
+        newTabs = newTabs.concat({
+            tab: docID,
+            component: (
+                <div dangerouslySetInnerHTML={{__html: text}}/>
+            ),
+            id: id,
+            closeable: true
+        });
+        console.log("New Tabs after add ");
+        newTabs.map((value) => console.log(value.id + " " + value.tab));
+        this.setState({
+            selectedDocumentID: selectedDocumentID,
+            tabs: newTabs,
+            activeIndex: newTabs.length - 1
+        })
+    }
+
     closeSideWindow(event) {
-        event.preventDefault();
+        if(event !== undefined) event.preventDefault();
         this.searchResultsColumnRef.current.className = 'search_results_show';
         this.openDocumentColumnRef.current.className = 'open_document_hide';
     }
@@ -202,13 +226,9 @@ class LoadDocuments extends React.Component {
                 if (result.status === 200) {
                     result.json().then((json) => {
                         let formattedJSON = '<pre>' + JSON.stringify(json, null, 2) + '</pre>';
-                        this.setState({
-                            selectedDocumentID: docId,
-                            currentDocument: formattedJSON
-                        }, () => {
-                            this.searchResultsColumnRef.current.className = 'search_results_hide';
-                            this.openDocumentColumnRef.current.className = 'open_document_show';
-                        })
+                        this.addTab(docId, formattedJSON, docId + "_json");
+                        this.searchResultsColumnRef.current.className = 'search_results_hide';
+                        this.openDocumentColumnRef.current.className = 'open_document_show';
                     });
                 }
             }, (error) => {
@@ -573,13 +593,9 @@ class LoadDocuments extends React.Component {
                             });
                             if (this.state.debug) {
                                 let formattedJSON = '<pre style="font-size: 11px">' + JSON.stringify({"query": result.query}, null, 2) + '</pre>';
-                                this.setState({
-                                    selectedDocumentID: -1,
-                                    currentDocument: formattedJSON
-                                }, () => {
-                                    this.searchResultsColumnRef.current.className = 'search_results_hide';
-                                    this.openDocumentColumnRef.current.className = 'open_document_show';
-                                })
+                                this.addTab(-1, formattedJSON, "Query JSON")
+                                this.searchResultsColumnRef.current.className = 'search_results_hide';
+                                this.openDocumentColumnRef.current.className = 'open_document_show';
                             }
                         });
                     } else {
@@ -687,7 +703,8 @@ class LoadDocuments extends React.Component {
             suggestions,
             value,
             microsites,
-            currentMicrosite
+            currentMicrosite,
+            tabs
         } = this.state;
 
         const selectedMicrositeStyle = {
@@ -832,7 +849,7 @@ class LoadDocuments extends React.Component {
                                 <table style={{width: '100%'}}>
                                     <tbody>
                                     <tr>
-                                        <td style={{width: '80%', paddingLeft : '5px'}}>
+                                        <td style={{width: '80%', paddingLeft: '5px'}}>
                                             <Autosuggest
                                                 suggestions={suggestions}
                                                 onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
@@ -1023,7 +1040,10 @@ class LoadDocuments extends React.Component {
                         </td>
                         <td style={searchResultsStyle} ref={this.searchResultsColumnRef}>
                             <div className="search_results">
-                                <table style={{width: '100%'}}>
+                                <table style={{
+                                    width: '100%',
+                                    display: (totalHits != null && totalHits > 0) ? 'table' : 'none'
+                                }}>
                                     <tbody>
                                     <tr>
                                         <td style={{width: '30%'}}>
@@ -1033,8 +1053,7 @@ class LoadDocuments extends React.Component {
                                         <td style={{
                                             width: '70%',
                                             textAlign: 'right',
-                                            padding: '5px',
-                                            visibility: (totalHits != null && totalHits > 0) ? 'visible' : 'hidden'
+                                            padding: '5px'
                                         }}
                                             className="sort_by">
                                             <Dropdown
@@ -1056,7 +1075,7 @@ class LoadDocuments extends React.Component {
                                          style={item.ID === selectedDocumentID ? selectedDocumentStyle : documentStyle}>
                                         <div className="container-fluid p-0">
                                             <div className="row">
-                                                <div className="col-lg-11" style={{textAlign : 'left'}}>
+                                                <div className="col-lg-11" style={{textAlign: 'left'}}>
                                                     <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}
                                                        data-doc-id={item.ID}>
                                                         <div style={headingStyle}>
@@ -1065,8 +1084,9 @@ class LoadDocuments extends React.Component {
                                                             style={idStyle}>({item.KCEXTERNALID})</span>
                                                         </div>
                                                     </a></div>
-                                                <div className="col-lg-1 show_in_desktop" style={iconsStyle}><a onClick={this.openJSON}
-                                                                                                 data-doc-id={item.ID}><img
+                                                <div className="col-lg-1 show_in_desktop" style={iconsStyle}><a
+                                                    onClick={this.openJSON}
+                                                    data-doc-id={item.ID}><img
                                                     src="img/knowledge.png" height="20px"/>
                                                 </a></div>
                                             </div>
@@ -1076,7 +1096,8 @@ class LoadDocuments extends React.Component {
                                             style={descriptionStyle}> <span
                                             dangerouslySetInnerHTML={{__html: item.CONTENT}}/></div>
 
-                                    </div>)) : <pre> {listLoaded ? "No records found" : "Please wait.. "}</pre>}
+                                    </div>)) : <div> {listLoaded ? <h3>"No records found"</h3> :
+                                    <img src="img/loading.gif" style={{margin: '20px', height: '50px'}}/>}</div>}
                                 {totalHits > loadedDocumentsCount ?
                                     <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}</div>
                         </td>
@@ -1093,7 +1114,27 @@ class LoadDocuments extends React.Component {
                                         className="show_in_desktop"><i className="fa fa-times-circle"/> Close</span>
                                     </a>
                                 </div>
-                                <div dangerouslySetInnerHTML={{__html: currentDocument}}/>
+                                {tabs.length > 0 ?
+                                    <CloseableTabs
+                                        tabPanelColor='#41a4ff11'
+                                        tabPanelClass='document_tab_panel'
+                                        mainClassName='document_tabs'
+                                        data={tabs}
+                                        onCloseTab={(id, newIndex) => {
+                                            if (newIndex === -1) {
+                                                this.setState({
+                                                    tabs: []
+                                                });
+                                                this.closeSideWindow();
+                                            } else {
+                                                this.setState({
+                                                    tabs: this.state.tabs.filter(item => item.id !== id),
+                                                    activeIndex: newIndex
+                                                });
+                                            }
+                                        }}
+                                        activeIndex={this.state.activeIndex}
+                                    /> : <span/>}
                             </div>
                         </td>
                     </tr>
