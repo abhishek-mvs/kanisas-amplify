@@ -628,8 +628,8 @@
 
     .open_document {
         max-width: 5000px;
-        overflow-y: auto;
-        overflow-x: auto;
+        overflow-y: unset;
+        overflow-x: unset;
     }
 
     .open_document_hide {
