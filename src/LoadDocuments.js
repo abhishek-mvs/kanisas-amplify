@@ -30,6 +30,7 @@ class LoadDocuments extends React.Component {
             isDocumentViewFullScreen: false,
             userProfile: {},
             microsites: [],
+            allMicrosites: [],
             userSegments: [],
             userAccessLevels: [],
             currentMicrosite: '',
@@ -72,7 +73,8 @@ class LoadDocuments extends React.Component {
             sortField: '',
             value: '',
             sortOrder: 1,
-            languageSelectionType: 'All',
+            languageSelectionType: 'Selected',
+            languageSelectionTypeValue: 'Selected languages below',
             debug: false
         };
         this.handleSearchChange = this.handleSearchChange.bind(this);
@@ -101,14 +103,22 @@ class LoadDocuments extends React.Component {
         this.addTab = this.addTab.bind(this);
         this.showFilters = this.showFilters.bind(this);
         this.closeFilters = this.closeFilters.bind(this);
+        this.getMicrositeLanguage = this.getMicrositeLanguage.bind(this);
+    }
+
+
+    getMicrositeLanguage(currentMicrosite) {
+        return this.state.allMicrosites.filter(microsite => microsite['id'] === currentMicrosite['id'])[0]['attributes'].filter(attribute => attribute['name'] === 'MS_Language')[0]['value'];
     }
 
     chooseMicrosite(event) {
-        event.preventDefault();
         this.setState({
-            currentMicrosite: event.currentTarget.getAttribute("data-microsite-id")
-        })
-        console.log('Microsite changed to ' + event.currentTarget.getAttribute("data-microsite-id"));
+            currentMicrosite: event.currentTarget.getAttribute("data-microsite-id"),
+            languageSelectionType: 'Selected',
+            languageSelectionTypeValue: 'Selected languages below',
+            checkedDocumentLanguages: [event.currentTarget.getAttribute("data-default-language")]
+        }, () => this.loadList(0));
+        console.log('Microsite changed to ' + event.currentTarget.getAttribute("data-microsite-id") + " with language " + event.currentTarget.getAttribute("data-default-language"));
     }
 
     onProductsChange = checkedProducts => {
@@ -315,16 +325,34 @@ class LoadDocuments extends React.Component {
             this.props.history.push('/');
             return;
         }
-        this.setState({
-            userProfile: cookies.get('user'),
-            microsites: cookies.get('user')['microsites'],
-            userSegments: cookies.get('user')['segments'],
-            userAccessLevels: cookies.get('user')['accessLevels'],
-            currentMicrosite: cookies.get('user')['microsites'][0].id
-        }, () => {
+        this.loadAllMicrosites();
+    }
 
-            this.loadEntitlements();
-        });
+    loadAllMicrosites() {
+        fetch(Urls.GET_TAXONOMIES + "action=getTaxoConcepts&param1=MS_root", {
+            method: 'get'
+        })
+            .then((result) => {
+                if (result.status === 200) {
+                    result.json().then(result => {
+                        console.log()
+                        this.setState({
+                            allMicrosites: result
+                        });
+                        const cookies = new Cookies();
+                        this.setState({
+                            userProfile: cookies.get('user'),
+                            microsites: cookies.get('user')['microsites'],
+                            userSegments: cookies.get('user')['segments'],
+                            userAccessLevels: cookies.get('user')['accessLevels'],
+                            currentMicrosite: cookies.get('user')['microsites'][0].id
+                        }, () => {
+                            this.loadEntitlements();
+                        });
+
+                    });
+                }
+            });
     }
 
     loadEntitlements() {
@@ -404,7 +432,8 @@ class LoadDocuments extends React.Component {
                         }
                         this.setState({
                             checkedEnterpriseSegments: selectedSegmentsNodes,
-                            enterpriseSegmentsNodes: result
+                            enterpriseSegmentsNodes: result,
+                            checkedDocumentLanguages: [this.getMicrositeLanguage(this.state.microsites[0])]
                         });
                         this.loadList(0);
                     });
@@ -480,6 +509,7 @@ class LoadDocuments extends React.Component {
             }, {value: 'Query', label: 'By determining query language'}]
         })
     }
+
 
     loadProducts() {
         fetch(Urls.GET_TAXONOMIES + "action=getTaxoConcepts&param1=SG_root", {
@@ -638,7 +668,7 @@ class LoadDocuments extends React.Component {
                             this.setState({
                                 listLoaded: true,
                                 totalHits: result.totalHits,
-                                buckets: validBuckets,
+                                buckets: this.state.searchString !== '' ? validBuckets : [],
                                 listItems: this.state.listItems.concat(result.hits),
                                 loadedDocumentsCount: this.state.loadedDocumentsCount + result.hits.length
                             }, () => {
@@ -996,6 +1026,7 @@ class LoadDocuments extends React.Component {
                                                 key={item.id}
                                                 style={(item.id === currentMicrosite) ? selectedMicrositeStyle : micrositeStyle}
                                                 onClick={this.chooseMicrosite}
+                                                data-default-language={this.getMicrositeLanguage(item)}
                                                 data-microsite-id={item.id}>{item.names['LA_eng_US']} &nbsp;</a>)}
                                     </AccordionItemPanel>
                                 </AccordionItem>
@@ -1007,7 +1038,7 @@ class LoadDocuments extends React.Component {
                                     </AccordionItemHeading>
                                     <AccordionItemPanel>
                                         Search from
-                                        <Dropdown value={"All languages"}
+                                        <Dropdown value={this.state.languageSelectionTypeValue}
                                                   options={this.state.languageSelectionTypes}
                                                   onChange={this.handleLanguageSelectionType}
                                         ></Dropdown>
