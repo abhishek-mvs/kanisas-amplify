@@ -13,7 +13,7 @@ import {
     Accordion, AccordionItem, AccordionItemButton, AccordionItemHeading, AccordionItemPanel,
 } from 'react-accessible-accordion';
 import Cookies from "universal-cookie";
-import CloseableTabs from 'react-closeable-tabs';
+import ReactCloseableTabs from "./ReactCloseableTabs";
 
 class LoadDocuments extends React.Component {
 
@@ -27,6 +27,7 @@ class LoadDocuments extends React.Component {
         this.state = {
             autoSuggestionString: '',
             showProfile: false,
+            isDocumentViewFullScreen: false,
             userProfile: {},
             microsites: [],
             userSegments: [],
@@ -83,6 +84,8 @@ class LoadDocuments extends React.Component {
         this.openDocument = this.openDocument.bind(this);
         this.openJSON = this.openJSON.bind(this);
         this.closeSideWindow = this.closeSideWindow.bind(this);
+        this.closeAllTabs = this.closeAllTabs.bind(this);
+        this.documentViewFullScreen = this.documentViewFullScreen.bind(this);
         this.onProductsChange = this.onProductsChange.bind(this);
         this.handleDocumentTypeChange = this.handleDocumentTypeChange.bind(this);
         this.handleLanguageChange = this.handleLanguageChange.bind(this);
@@ -212,6 +215,40 @@ class LoadDocuments extends React.Component {
         if (event !== undefined) event.preventDefault();
         this.searchResultsColumnRef.current.className = 'search_results_show';
         this.openDocumentColumnRef.current.className = 'open_document_hide';
+        this.searchControlsColumnRef.current.style.display = 'table-cell';
+        this.setState({
+            isDocumentViewFullScreen: false
+        });
+    }
+
+    closeAllTabs(event) {
+        if (event !== undefined) event.preventDefault();
+        this.setState({
+            selectedDocumentID: -1,
+            tabs: []
+        });
+        this.searchResultsColumnRef.current.className = 'search_results_show';
+        this.openDocumentColumnRef.current.className = 'open_document_hide';
+        this.searchControlsColumnRef.current.style.display = 'table-cell';
+        this.setState({
+            isDocumentViewFullScreen: false
+        });
+    }
+
+    documentViewFullScreen(event) {
+        if (event !== undefined) event.preventDefault();
+        if (this.state.isDocumentViewFullScreen) {
+            this.searchResultsColumnRef.current.className = 'search_results_hide';
+            this.openDocumentColumnRef.current.className = 'open_document_show';
+            this.searchControlsColumnRef.current.style.display = 'table-cell';
+        } else {
+            this.searchControlsColumnRef.current.style.display = 'none';
+            this.searchResultsColumnRef.current.className = 'search_results_hide_full';
+            this.openDocumentColumnRef.current.className = 'open_document_show_full';
+        }
+        this.setState({
+            isDocumentViewFullScreen: !this.state.isDocumentViewFullScreen
+        });
     }
 
     openJSON(event) {
@@ -242,7 +279,7 @@ class LoadDocuments extends React.Component {
     }
 
     showFilters(event) {
-        this.searchControlsColumnRef.current.style.display = 'table';
+        this.searchControlsColumnRef.current.style.display = 'table-cell';
         this.searchResultsColumnRef.current.className = 'search_results_hide';
         this.openDocumentColumnRef.current.className = 'open_document_hide';
     }
@@ -592,9 +629,9 @@ class LoadDocuments extends React.Component {
                     }
                     if (result.status === 200) {
                         result.json().then(result => {
-                            let validBuckets = result.buckets.filter(e => result.totalHits != 10000 && e.count >= 0.2 * result.totalHits && e.count <= 0.6 * result.totalHits).slice(0, 20);
+                            let validBuckets = result.buckets.filter(e => result.totalHits !== 10000 && e.count >= 0.2 * result.totalHits && e.count <= 0.6 * result.totalHits).slice(0, 20);
                             if (validBuckets.length === 0) {
-                                validBuckets = result.buckets.filter(e => result.totalHits != 10000 && e.count >= 0.1 * result.totalHits && e.count <= 0.8 * result.totalHits).slice(0, 20);
+                                validBuckets = result.buckets.filter(e => result.totalHits !== 10000 && e.count >= 0.1 * result.totalHits && e.count <= 0.8 * result.totalHits).slice(0, 20);
                             }
                             this.setState({
                                 listLoaded: true,
@@ -603,8 +640,9 @@ class LoadDocuments extends React.Component {
                                 listItems: this.state.listItems.concat(result.hits),
                                 loadedDocumentsCount: this.state.loadedDocumentsCount + result.hits.length
                             }, () => {
-                                this.searchResultsColumnRef.current.className = 'search_results_show';
-                                this.openDocumentColumnRef.current.className = 'open_document_hide';
+                                if (this.state.isDocumentViewFullScreen) {
+                                    this.documentViewFullScreen();
+                                }
                             });
                             if (this.state.debug) {
                                 let formattedJSON = '<pre style="font-size: 11px">' + JSON.stringify({"query": result.query}, null, 2) + '</pre>';
@@ -719,7 +757,8 @@ class LoadDocuments extends React.Component {
             value,
             microsites,
             currentMicrosite,
-            tabs
+            tabs,
+            viewDocumentFullScreen
         } = this.state;
 
         const selectedMicrositeStyle = {
@@ -920,7 +959,7 @@ class LoadDocuments extends React.Component {
                                     fontSize: '16px',
                                     fontFamily: 'Roboto',
                                     padding: '8px',
-                                    color : '#298ae5'
+                                    color: '#298ae5'
                                 }} onClick={this.closeFilters}><i className="fa fa-times-circle"/> Close Filters
                                 </a>
 
@@ -1123,7 +1162,7 @@ class LoadDocuments extends React.Component {
                                             style={descriptionStyle}> <span
                                             dangerouslySetInnerHTML={{__html: item.CONTENT}}/></div>
 
-                                    </div>)) : <div> {listLoaded ? <h3>"No records found"</h3> :
+                                    </div>)) : <div> {listLoaded ? <div style={{padding : '10px'}}><h4>No records found</h4></div> :
                                     <img src="img/loading.gif" style={{margin: '20px', height: '50px'}}/>}</div>}
                                 {totalHits > loadedDocumentsCount ?
                                     <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}</div>
@@ -1131,18 +1170,28 @@ class LoadDocuments extends React.Component {
                         <td style={documentViewStyle} ref={this.openDocumentColumnRef} className="open_document_hide">
                             <div className="open_document">
                                 <div className="open_document_controls">
-                                    <a style={{
-                                        fontSize: '16px',
-                                        fontFamily: 'Roboto',
-                                        padding: '8px',
-                                        textDecorationStyle: 'underline'
-                                    }} onClick={this.closeSideWindow}><span className="show_in_mobile"><i
-                                        className="fa fa-arrow-left"/> Search Results</span><span
-                                        className="show_in_desktop"><i className="fa fa-times-circle"/> Close</span>
-                                    </a>
+                                    <div>
+                                        <a onClick={this.closeSideWindow}><span className="show_in_mobile"><i
+                                            className="fa fa-arrow-left"/> Results</span><span
+                                            className="show_in_desktop"><i
+                                            className="fa fa-eye-slash"/> Hide</span>
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <a onClick={this.closeAllTabs}><span><i
+                                            className="fa fa-times-circle"/> Close all tabs</span>
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <a onClick={this.documentViewFullScreen}> {this.state.isDocumentViewFullScreen ?
+                                            <span><i
+                                                className="fa fa-compress"/>Search Results</span> : <span><i
+                                                className="fa fa-expand"/>Full Width</span>}
+                                        </a>
+                                    </div>
                                 </div>
                                 {tabs.length > 0 ?
-                                    <CloseableTabs
+                                    <ReactCloseableTabs
                                         tabPanelColor='#41a4ff11'
                                         tabPanelClass='document_tab_panel'
                                         mainClassName='document_tabs'

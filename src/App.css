@@ -539,6 +539,10 @@
     display: none;
 }
 
+.open_document_show_full > .open_document {
+    max-width: 100vw;
+}
+
 .open_document {
     overflow-y: scroll;
     overflow-x: scroll;
@@ -564,12 +568,20 @@
     width: 40%;
 }
 
+.search_results_hide_full {
+    display: none;
+}
+
 .open_document_hide {
     display: none;
 }
 
 .open_document_show {
     width: 40%;
+}
+
+.open_document_show_full {
+    width: 100%;
 }
 
 .show_in_desktop {
@@ -593,13 +605,30 @@
     padding-left: 10px;
 }
 
+.open_document_controls > div {
+    display: inline-grid;
+    margin: 8px 8px 8px 0;
+    font-size: 16px;
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #41a4ff;
+    color: #41a4ff;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.open_document_controls > div > a > span > i {
+    font-size: 22px;
+    padding: 3px 6px 3px 3px;
+}
+
 .document_tabs {
 }
 
 .document_tab_panel {
 }
 
-.document_tabs > .document_tab_panel div.tab.active{
+.document_tabs > .document_tab_panel div.tab.active {
     border-bottom: 3px solid #298ae5;
 }
 
@@ -626,10 +655,10 @@
         display: none;
     }
 
+
+
     .open_document {
-        max-width: 5000px;
-        overflow-y: unset;
-        overflow-x: unset;
+        max-width: 100vw;
     }
 
     .open_document_hide {
@@ -637,7 +666,8 @@
     }
 
     .open_document_show {
-        display: table;
+        display: block;
+        width: 100%;
     }
 
     .InlineDropdown-root {
@@ -666,7 +696,7 @@
         display: block;
     }
 
-    .document_tabs > .document_tab_panel div.tab{
+    .document_tabs > .document_tab_panel div.tab {
         font-size: 12px;
     }
 }
