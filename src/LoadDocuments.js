@@ -215,7 +215,7 @@ class LoadDocuments extends React.Component {
         if (event !== undefined) event.preventDefault();
         this.searchResultsColumnRef.current.className = 'search_results_show';
         this.openDocumentColumnRef.current.className = 'open_document_hide';
-        this.searchControlsColumnRef.current.style.display = 'table-cell';
+        this.searchControlsColumnRef.current.className = 'search_controls_show';
         this.setState({
             isDocumentViewFullScreen: false
         });
@@ -229,7 +229,7 @@ class LoadDocuments extends React.Component {
         });
         this.searchResultsColumnRef.current.className = 'search_results_show';
         this.openDocumentColumnRef.current.className = 'open_document_hide';
-        this.searchControlsColumnRef.current.style.display = 'table-cell';
+        this.searchControlsColumnRef.current.className = 'search_controls_show';
         this.setState({
             isDocumentViewFullScreen: false
         });
@@ -240,9 +240,9 @@ class LoadDocuments extends React.Component {
         if (this.state.isDocumentViewFullScreen) {
             this.searchResultsColumnRef.current.className = 'search_results_hide';
             this.openDocumentColumnRef.current.className = 'open_document_show';
-            this.searchControlsColumnRef.current.style.display = 'table-cell';
+            this.searchControlsColumnRef.current.className = 'search_controls_show';
         } else {
-            this.searchControlsColumnRef.current.style.display = 'none';
+            this.searchControlsColumnRef.current.className = 'search_controls_hide';
             this.searchResultsColumnRef.current.className = 'search_results_hide_full';
             this.openDocumentColumnRef.current.className = 'open_document_show_full';
         }
@@ -279,12 +279,14 @@ class LoadDocuments extends React.Component {
     }
 
     showFilters(event) {
+        this.searchControlsColumnRef.current.className = '';
         this.searchControlsColumnRef.current.style.display = 'table-cell';
         this.searchResultsColumnRef.current.className = 'search_results_hide';
         this.openDocumentColumnRef.current.className = 'open_document_hide';
     }
 
     closeFilters(event) {
+        this.searchControlsColumnRef.current.className = '';
         this.searchControlsColumnRef.current.style.display = 'none';
         this.searchResultsColumnRef.current.className = 'search_results_show';
         this.openDocumentColumnRef.current.className = 'open_document_hide';
@@ -1137,33 +1139,34 @@ class LoadDocuments extends React.Component {
 
                                 {(listItems != null && listItems.length > 0) ? listItems.map(item => (
 
-                                    <div key={item.ID}
-                                         style={item.ID === selectedDocumentID ? selectedDocumentStyle : documentStyle}>
-                                        <div className="container-fluid p-0">
-                                            <div className="row">
-                                                <div className="col-lg-11" style={{textAlign: 'left'}}>
-                                                    <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}
-                                                       data-doc-id={item.ID}>
-                                                        <div style={headingStyle}>
+                                        <div key={item.ID}
+                                             style={item.ID === selectedDocumentID ? selectedDocumentStyle : documentStyle}>
+                                            <div className="container-fluid p-0">
+                                                <div className="row">
+                                                    <div className="col-lg-11" style={{textAlign: 'left'}}>
+                                                        <a onClick={this.openDocument} data-external-url={item.EXTERNALURL}
+                                                           data-doc-id={item.ID}>
+                                                            <div style={headingStyle}>
                                 <span style={idStyle}
                                       dangerouslySetInnerHTML={{__html: item.KCTITLE}}/> <span
-                                                            style={idStyle}>({item.KCEXTERNALID})</span>
-                                                        </div>
+                                                                style={idStyle}>({item.KCEXTERNALID})</span>
+                                                            </div>
+                                                        </a></div>
+                                                    <div className="col-lg-1 show_in_desktop" style={iconsStyle}><a
+                                                        onClick={this.openJSON}
+                                                        data-doc-id={item.ID}><img
+                                                        src="img/knowledge.png" height="20px"/>
                                                     </a></div>
-                                                <div className="col-lg-1 show_in_desktop" style={iconsStyle}><a
-                                                    onClick={this.openJSON}
-                                                    data-doc-id={item.ID}><img
-                                                    src="img/knowledge.png" height="20px"/>
-                                                </a></div>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <div
-                                            style={descriptionStyle}> <span
-                                            dangerouslySetInnerHTML={{__html: item.CONTENT}}/></div>
+                                            <div
+                                                style={descriptionStyle}> <span
+                                                dangerouslySetInnerHTML={{__html: item.CONTENT}}/></div>
 
-                                    </div>)) : <div> {listLoaded ? <div style={{padding : '10px'}}><h4>No records found</h4></div> :
-                                    <img src="img/loading.gif" style={{margin: '20px', height: '50px'}}/>}</div>}
+                                        </div>)) :
+                                    <div> {listLoaded ? <div style={{padding: '10px'}}><h4>No records found</h4></div> :
+                                        <img src="img/loading.gif" style={{margin: '20px', height: '50px'}}/>}</div>}
                                 {totalHits > loadedDocumentsCount ?
                                     <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}</div>
                         </td>
@@ -1177,12 +1180,13 @@ class LoadDocuments extends React.Component {
                                             className="fa fa-eye-slash"/> Hide</span>
                                         </a>
                                     </div>
-                                    <div>
-                                        <a onClick={this.closeAllTabs}><span><i
-                                            className="fa fa-times-circle"/> Close all tabs</span>
-                                        </a>
-                                    </div>
-                                    <div>
+                                    {tabs.length > 1 ?
+                                        <div>
+                                            <a onClick={this.closeAllTabs}><span><i
+                                                className="fa fa-times-circle"/> Close all tabs</span>
+                                            </a>
+                                        </div> : ''}
+                                    <div className="show_in_desktop">
                                         <a onClick={this.documentViewFullScreen}> {this.state.isDocumentViewFullScreen ?
                                             <span><i
                                                 className="fa fa-compress"/>Search Results</span> : <span><i

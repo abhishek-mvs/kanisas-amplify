@@ -560,6 +560,14 @@
     border-color: #41a4ff;
 }
 
+.search_controls_show {
+    display: table-cell;
+}
+
+.search_controls_hide {
+    display: none;
+}
+
 .search_results_show {
     width: 80%;
 }
@@ -617,6 +625,7 @@
     cursor: pointer;
 }
 
+
 .open_document_controls > div > a > span > i {
     font-size: 22px;
     padding: 3px 6px 3px 3px;
@@ -656,7 +665,6 @@
     }
 
 
-
     .open_document {
         max-width: 100vw;
     }
@@ -694,6 +702,10 @@
 
     .show_in_mobile {
         display: block;
+    }
+
+    .open_document_controls > .show_in_desktop {
+        display: none;
     }
 
     .document_tabs > .document_tab_panel div.tab {
