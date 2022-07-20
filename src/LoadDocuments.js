@@ -207,7 +207,7 @@ class LoadDocuments extends React.Component {
         newTabs = newTabs.concat({
             tab: docID,
             component: (
-                <div dangerouslySetInnerHTML={{__html: text}}/>
+                <div style={{maxWidth : '100%', overflowY : 'scroll'}} dangerouslySetInnerHTML={{__html: text}}/>
             ),
             id: id,
             closeable: true
