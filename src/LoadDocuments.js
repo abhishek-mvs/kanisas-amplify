@@ -56,6 +56,8 @@ class LoadDocuments extends React.Component {
             suggestions: [],
             checkedProducts: [],
             productsMap: {},
+            productsReverseMap: {},
+            entitlementsMap: {},
             productNodes: [],
             error: null,
             loadedDocumentsCount: 1,
@@ -104,6 +106,8 @@ class LoadDocuments extends React.Component {
         this.showFilters = this.showFilters.bind(this);
         this.closeFilters = this.closeFilters.bind(this);
         this.getMicrositeLanguage = this.getMicrositeLanguage.bind(this);
+        this.getMetadata1 = this.getMetadata1.bind(this);
+        this.getMetadata2 = this.getMetadata2.bind(this);
     }
 
 
@@ -207,7 +211,7 @@ class LoadDocuments extends React.Component {
         newTabs = newTabs.concat({
             tab: docID,
             component: (
-                <div style={{maxWidth : '100%', overflowY : 'scroll'}} dangerouslySetInnerHTML={{__html: text}}/>
+                <div style={{maxWidth: '100%', overflowY: 'scroll'}} dangerouslySetInnerHTML={{__html: text}}/>
             ),
             id: id,
             closeable: true
@@ -364,6 +368,10 @@ class LoadDocuments extends React.Component {
             .then((result) => {
                 if (result.status === 200) {
                     result.json().then(result => {
+                        let entitlementsMapTemp = result.reduce(function (map, concept) {
+                            map[concept.id] = concept.names['LA_eng_US'];
+                            return map;
+                        }, {});
                         let nodesTemp = result.map(concept => {
                             return {
                                 value: concept.id, label: concept.names['LA_eng_US'].replace(/(.{15})..+/, "$1..")
@@ -371,6 +379,7 @@ class LoadDocuments extends React.Component {
                         });
                         nodesTemp.sort(this.sortNames);
                         this.setState({
+                            entitlementsMap: entitlementsMapTemp,
                             checkedEntitlements: this.state.userAccessLevels,
                             entitlementNodes: [{
                                 value: 'Entitlements', label: 'Entitlements', children: nodesTemp
@@ -522,9 +531,15 @@ class LoadDocuments extends React.Component {
                             map[concept.names['LA_eng_US']] = concept.id;
                             return map;
                         }, {});
+                        let productsReverseMapTemp = result.reduce(function (map, concept) {
+                            map[concept.id] = concept.names['LA_eng_US'];
+                            return map;
+                        }, {});
                         let nodesTemp = Object.keys(productsMapTemp);
                         this.setState({
-                            productsMap: productsMapTemp, productNodes: nodesTemp
+                            productsMap: productsMapTemp,
+                            productNodes: nodesTemp,
+                            productsReverseMap: productsReverseMapTemp
                         });
                     });
                 }
@@ -708,6 +723,23 @@ class LoadDocuments extends React.Component {
         });
     };
 
+    getMetadata1(item) {
+        let result = "Product: "
+        result += item.TAGS.filter(tag => tag.startsWith("SG_")).map(tag => this.state.productsReverseMap[tag]).join(", ");
+        return result;
+    }
+
+    getMetadata2(item) {
+        let result = "Initial Published Date : " + this.formatDate(item.CREATEDDATE) + " | Last Modified Date : " + this.formatDate(item.DOCLASTMODIFIEDDATE) + " | Published : " + this.formatDate(item.PUBLISHEDDATE);
+        result += " | Access Levels: "
+        result += item.TAGS.filter(tag => tag.startsWith("SAL_")).map(tag => this.state.entitlementsMap[tag]).join(", ");
+        return result;
+    }
+
+    formatDate(date) {
+        return new Date(Date.parse(date)).toLocaleDateString('en-US');
+    }
+
     onSuggestionSelected(event, {suggestion, suggestionValue, suggestionIndex, sectionIndex, method}) {
         this.setState({
             searchString: suggestion.label + ' ',
@@ -853,7 +885,10 @@ class LoadDocuments extends React.Component {
 
         };
         const descriptionStyle = {
-            overflow: 'hidden', fontSize: '14px', textOverflow: 'ellipsis'
+            overflow: 'hidden', fontSize: '16px', textOverflow: 'ellipsis'
+        }
+        const metadataStyle = {
+            fontSize: '16px', color: 'grey', paddingTop: '5px'
         }
         const entitlementStyle = {
             height: '200px', backgroundColor: 'white', overflowY: 'scroll'
@@ -1194,6 +1229,9 @@ class LoadDocuments extends React.Component {
                                             <div
                                                 style={descriptionStyle}> <span
                                                 dangerouslySetInnerHTML={{__html: item.CONTENT}}/></div>
+                                            <div
+                                                style={metadataStyle}> {this.getMetadata1(item)}<br/>{this.getMetadata2(item)}
+                                            </div>
 
                                         </div>)) :
                                     <div> {listLoaded ? <div style={{padding: '10px'}}><h4>No records found</h4></div> :
