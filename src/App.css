@@ -1,6 +1,69 @@
+#kiku-blue {
+    --primary-color: #41a4ff;
+    --primary-color-11: #41a4ff11;
+    --primary-color-22: #41a4ff22;
+    --primary-color-33: #41a4ff33;
+    --primary-color-66: #41a4ff66;
+    --secondary-color: #298ae5;
+}
+
+#kiku-green {
+    --primary-color: #1B5E20;
+    --primary-color-11: #E8F5E9;
+    --primary-color-22: #C8E6C9;
+    --primary-color-33: #A5D6A7;
+    --primary-color-66: #4CAF50;
+    --secondary-color: #00C853;
+}
+
+#kiku-yellow {
+    --primary-color: #F57F17;
+    --primary-color-11: #FFFDE7;
+    --primary-color-22: #FFF9C4;
+    --primary-color-33: #FFF59D;
+    --primary-color-66: #FDD835;
+    --secondary-color: #FFD600;
+}
+
+#kiku-deep-orange {
+    --primary-color: #BF360C;
+    --primary-color-11: #FBE9E7;
+    --primary-color-22: #FFCCBC;
+    --primary-color-33: #FFAB91;
+    --primary-color-66: #F4511E;
+    --secondary-color: #DD2C00;
+}
+
+#kiku-purple {
+    --primary-color: #4A148C;
+    --primary-color-11: #F3E5F5;
+    --primary-color-22: #E1BEE7;
+    --primary-color-33: #CE93D8;
+    --primary-color-66: #9C27B0;
+    --secondary-color: #AA00FF;
+}
+
+.document_title {
+    font-size: 18px;
+    color: var(--secondary-color);
+    font-weight: bold;
+}
+
+.date {
+    font-size: 12px;
+    color: black;
+    font-weight: normal;
+}
+
+.date_bold {
+    font-size: 12px;
+    color: black;
+    font-weight: bold;
+}
 
 .tabbar {
     margin: 10px;
+    background-color: var(--primary-color-11);
 }
 
 .tabbar br {
@@ -31,17 +94,17 @@
 
 /* Track */
 ::-webkit-scrollbar-track {
-    background: #41a4ff11;
+    background: var(--primary-color-11);
 }
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-    background: #41a4ff22;
+    background: var(--primary-color-22);
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-    background: #41a4ff22;
+    background: var(--primary-color-22);
 }
 
 @keyframes App-logo-spin {
@@ -335,7 +398,7 @@
 
 .react-autosuggest__suggestions-container {
     display: none;
-    color: #41a4ff;
+    color: var(--primary-color);
     font-size: 14px;
     margin-top: 5px;
     position: absolute;
@@ -344,7 +407,7 @@
     border-radius: 5px;
     min-width: 300px;
     max-width: 400px;
-    border: 1px solid #41a4ff66;
+    border: 1px solid var(--primary-color-66);
 }
 
 .react-autosuggest__suggestions-container--open {
@@ -372,7 +435,7 @@
 .accordion__item {
     margin: 5px 5px 5px 0px;
     border-radius: 0 8px 8px 0;
-    border: 1px solid #41a4ff66;
+    border: 1px solid var(--primary-color-66);
 }
 
 .accordion__heading {
@@ -386,14 +449,14 @@
     width: 100%;
     text-align: left;
     background: white;
-    border: 1px solid #41a4ff66;
+    border: 1px solid var(--primary-color-66);
     border-radius: 0 8px 8px 0;
     color: #222222;
 }
 
 
 .accordion__button:hover {
-    background-color: #41a4ff22;
+    background-color: var(--primary-color-22);
 }
 
 .accordion__button:before {
@@ -421,7 +484,7 @@
     position: relative;
     overflow: hidden;
     background-color: white;
-    color: #41a4ff;
+    color: var(--primary-color);
     cursor: default;
     outline: none;
     padding: 8px 40px 8px 10px;
@@ -449,7 +512,7 @@
 
 .InlineDropdown-menu {
     background-color: white;
-    border: 1px solid #41a4ff;
+    border: 1px solid var(--primary-color);
     border-radius: 8px;
     box-sizing: border-box;
     margin-top: -1px;
@@ -555,9 +618,9 @@
 }
 
 .submit_button {
-    background-color: #41a4ff;
+    background-color: var(--primary-color);
     color: white;
-    border-color: #41a4ff;
+    border-color: var(--primary-color);
 }
 
 .search_controls_show {
@@ -601,7 +664,7 @@
 }
 
 .results_count {
-    color: #41a4ff;
+    color: var(--primary-color);
     font-size: 14px;
     font-weight: bold;
     line-height: 120%;
@@ -619,8 +682,8 @@
     font-size: 16px;
     padding: 8px;
     text-align: center;
-    border: 1px solid #41a4ff;
-    color: #41a4ff;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
     border-radius: 3px;
     cursor: pointer;
 }
@@ -638,7 +701,7 @@
 }
 
 .document_tabs > .document_tab_panel div.tab.active {
-    border-bottom: 3px solid #298ae5;
+    border-bottom: 3px solid var(--secondary-color);
 }
 
 @media only screen and (max-width: 800px) {

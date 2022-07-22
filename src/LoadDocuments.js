@@ -8,12 +8,15 @@ import 'react-dropdown/style.css';
 import {saveAs} from 'file-saver';
 import {FormCheck, Modal} from "react-bootstrap";
 import Autosuggest from 'react-autosuggest';
+import LoadingBar from 'react-top-loading-bar'
 
 import {
     Accordion, AccordionItem, AccordionItemButton, AccordionItemHeading, AccordionItemPanel,
 } from 'react-accessible-accordion';
 import Cookies from "universal-cookie";
 import ReactCloseableTabs from "./ReactCloseableTabs";
+
+const ALL_THEMES = ['kiku-blue', 'kiku-purple', 'kiku-yellow', 'kiku-deep-orange', 'kiku-green'];
 
 class LoadDocuments extends React.Component {
 
@@ -23,8 +26,10 @@ class LoadDocuments extends React.Component {
         this.searchResultsColumnRef = React.createRef();
         this.openDocumentColumnRef = React.createRef();
         this.searchBoxRef = React.createRef();
+        this.loaderRef = React.createRef();
 
         this.state = {
+            theme: ALL_THEMES[Math.floor(Math.random() * ALL_THEMES.length)],
             autoSuggestionString: '',
             showProfile: false,
             isDocumentViewFullScreen: false,
@@ -108,6 +113,7 @@ class LoadDocuments extends React.Component {
         this.getMicrositeLanguage = this.getMicrositeLanguage.bind(this);
         this.getMetadata1 = this.getMetadata1.bind(this);
         this.getMetadata2 = this.getMetadata2.bind(this);
+        this.chooseTheme = this.chooseTheme.bind(this);
     }
 
 
@@ -165,11 +171,18 @@ class LoadDocuments extends React.Component {
         }
     }
 
+    chooseTheme(event) {
+        this.setState({
+            theme: event.currentTarget.getAttribute("data-theme")
+        })
+    }
+
     openDocument(event) {
         event.preventDefault();
         this.setState({
             selectedDocumentID: -1
         });
+        this.loaderRef.current.continuousStart(0, 1000);
         let url = event.currentTarget.getAttribute("data-external-url");
         let docID = event.currentTarget.getAttribute("data-doc-id");
         let fileName = url.substring(url.indexOf("Publishing/") + "Publishing/".length);
@@ -180,15 +193,16 @@ class LoadDocuments extends React.Component {
             })
         })
             .then((result) => {
+                this.loaderRef.current.complete();
                 if (result.status === 200) {
                     result.text().then((text) => {
-                        text = text.replace("{ background-color: #6699CC; font-size: 12px; color: #ffffff; font-weight: bold; }", "{ background-color: #41a4ff22; font-size: 14px; color: black; font-weight: bold; font-family : 'Roboto'}")
-                        text = text.replace(".date\t \t{font-size:12px;color:#FFFFFF;font-weight:normal;}", ".date\t \t{font-size:12px;color:black;font-weight:normal;}")
-                        text = text.replace(".date_bold \t{font-size:12px;color:#FFFFFF;font-weight:bold;}", ".date_bold \t{font-size:12px;color:black;font-weight:bold;}")
-                        text = text.replace(".document_title {font-size: 18px; color: #0E5899; font-weight: bold; }", ".document_title {font-size: 18px; color: #298ae5; font-weight: bold; }")
+                        text = text.replace("{ background-color: #6699CC; font-size: 12px; color: #ffffff; font-weight: bold; }", "{ font-size: 14px; color: black; font-weight: bold;}")
+                        text = text.replace(".date\t \t{font-size:12px;color:#FFFFFF;font-weight:normal;}", "")
+                        text = text.replace(".date_bold \t{font-size:12px;color:#FFFFFF;font-weight:bold;}", "")
+                        text = text.replace(".document_title {font-size: 18px; color: #0E5899; font-weight: bold; }", "")
                         text = text.replace("body\t\t{font-family: Arial Unicode MS,verdana,helvetica,sans-serif;  margin: 0px 0px 0px 0px; font-size:12px;}", "")
                         text = text.replace("select,option  { font-family: Arial Unicode MS,verdana,helvetica; font-size: 12px; font-weight: normal;};", "")
-                        text = text.replaceAll("viewdoc_tab.gif", "viewdoc_tab.png")
+                        text = text.replaceAll("viewdoc_tab.gif", this.state.theme + "/viewdoc_tab.png")
 
                         this.addTab(docID, text, docID);
                         this.searchResultsColumnRef.current.className = 'search_results_hide';
@@ -329,6 +343,7 @@ class LoadDocuments extends React.Component {
             this.props.history.push('/');
             return;
         }
+        this.loaderRef.current.continuousStart(0, 1000);
         this.loadAllMicrosites();
     }
 
@@ -586,6 +601,7 @@ class LoadDocuments extends React.Component {
             alert("Please choose at least one language.");
             return;
         }
+        this.loaderRef.current.continuousStart(0, 1000);
 
         if (startKCNum === 0 && exportDoc === false) {
             this.setState({
@@ -665,6 +681,7 @@ class LoadDocuments extends React.Component {
             })
         })
             .then((result) => {
+                    this.loaderRef.current.complete();
                     if (exportDoc) {
                         if (result.status === 200) {
                             result.text().then((text) => {
@@ -855,7 +872,7 @@ class LoadDocuments extends React.Component {
         const selectedDocumentStyle = {
             textAlign: 'left', verticalAlign: 'top', padding: '12px',
             margin: '0px 5px 12px 0px',
-            backgroundColor: '#41a4ff11',
+            backgroundColor: "var(--primary-color-11)",
             borderRadius: '5px'
         };
         const documentStyle = {
@@ -878,10 +895,10 @@ class LoadDocuments extends React.Component {
             cursor: 'pointer', margin: '0px', fontSize: '14px'
         }
         const idStyle = {
-            color: '#298ae5', fontSize: '16px'
+            color: "var(--secondary-color)", fontSize: '16px'
         };
         const nameStyle = {
-            color: '#298ae5', fontWeight: 'bold', textTransform: 'capitalize'
+            color: "var(--secondary-color)", fontWeight: 'bold', textTransform: 'capitalize'
 
         };
         const descriptionStyle = {
@@ -901,14 +918,15 @@ class LoadDocuments extends React.Component {
             value
         };
 
-        return (<div>
-                <table style={{width: '100%', height: '100px', backgroundColor: '#41a4ff33'}}
+        return (<div id={this.state.theme}>
+                <table style={{width: '100%', height: '100px', backgroundColor: "var(--primary-color-33)"}}
                        className="header_desktop">
                     <tbody>
                     <tr>
-                        <td style={{width: '20%', padding: '20px'}}><img src="img/kiku_logo.png"
-                                                                         style={{height: '40px'}}
-                                                                         alt="Kiku Logo"/></td>
+                        <td style={{width: '20%', padding: '20px'}}><img
+                            src={"img/" + this.state.theme + "/kiku_logo.png"}
+                            style={{height: '40px'}}
+                            alt="Kiku Logo"/></td>
                         <td style={{width: '65%'}}>
                             <form onSubmit={this.handleSubmit}>
 
@@ -950,12 +968,13 @@ class LoadDocuments extends React.Component {
                     </tr>
                     </tbody>
                 </table>
-                <table style={{width: '100%', backgroundColor: '#41a4ff33'}} className="header_mobile">
+                <table style={{width: '100%', backgroundColor: "var(--primary-color-33)"}} className="header_mobile">
                     <tbody>
                     <tr>
-                        <td style={{width: '40%', padding: '15px'}}><img src="img/kiku_logo.png"
-                                                                         style={{height: '20px'}}
-                                                                         alt="Kiku Logo"/></td>
+                        <td style={{width: '40%', padding: '15px'}}><img
+                            src={"img/" + this.state.theme + "/kiku_logo.png"}
+                            style={{height: '20px'}}
+                            alt="Kiku Logo"/></td>
                         <td style={{textAlign: 'right', padding: '6px', width: '60%'}}>
                             <h6 style={nameStyle}>{userProfile.firstname} {userProfile.lastname}</h6>
                             <a href="#" onClick={() => this.handleUserProfileModal()}>Profile</a> | <a
@@ -992,7 +1011,7 @@ class LoadDocuments extends React.Component {
                                     </tr>
                                     </tbody>
                                 </table>
-                                <a style={{color: '#298ae5', fontSize: '14px', padding: '5px'}}
+                                <a style={{color: "var(--secondary-color)", fontSize: '14px', padding: '5px'}}
                                    onClick={this.showFilters}>Additional
                                     Filters</a>
 
@@ -1010,7 +1029,24 @@ class LoadDocuments extends React.Component {
                         <b>Knowledge
                             Panel</b> {this.state.microsites.map((t) => t['names']['LA_eng_US']).join(", ")}<br/>
                         <b>Entitlements</b> {this.state.userAccessLevels.join(", ")}<br/>
-                        <b>Segments</b> {this.state.userSegments.join(", ")}<br/></Modal.Body>
+                        <b>Segments</b> {this.state.userSegments.join(", ")}<br/>
+                        <br/>
+                        <h5>Themes</h5>
+                        <a onClick={this.chooseTheme} data-theme="kiku-blue" className="btn"
+                           style={{backgroundColor: '#41a4ff', margin: '10px'}}>Blue</a>
+                        <a onClick={this.chooseTheme}
+                           data-theme="kiku-purple" className="btn"
+                           style={{backgroundColor: '#4A148C', color: 'white', margin: '10px'}}>Purple</a>
+                        <a onClick={this.chooseTheme}
+                           data-theme="kiku-green" className="btn"
+                           style={{backgroundColor: '#1B5E20', color: 'white', margin: '10px'}}>Green</a>
+                        <a onClick={this.chooseTheme}
+                           data-theme="kiku-yellow" className="btn"
+                           style={{backgroundColor: '#F57F17', color: 'white', margin: '10px'}}>Yellow</a>
+                        <a onClick={this.chooseTheme}
+                           data-theme="kiku-deep-orange" className="btn"
+                           style={{backgroundColor: '#BF360C', color: 'white', margin: '10px'}}>Deep Orange</a>
+                    </Modal.Body>
                     <Modal.Footer>
                         <Button onClick={() => this.handleUserProfileModal()}>Close</Button>
                     </Modal.Footer>
@@ -1026,7 +1062,7 @@ class LoadDocuments extends React.Component {
                                     fontSize: '16px',
                                     fontFamily: 'Roboto',
                                     padding: '8px',
-                                    color: '#298ae5'
+                                    color: "var(--secondary-color)"
                                 }} onClick={this.closeFilters}><i className="fa fa-times-circle"/> Close Filters
                                 </a>
 
@@ -1202,6 +1238,7 @@ class LoadDocuments extends React.Component {
                                     </tr>
                                     </tbody>
                                 </table>
+                                <LoadingBar ref={this.loaderRef} color="var(--primary-color)" height="3px"/>
 
                                 {(listItems != null && listItems.length > 0) ? listItems.map(item => (
 
@@ -1220,8 +1257,10 @@ class LoadDocuments extends React.Component {
                                                         </a></div>
                                                     <div className="col-lg-1 show_in_desktop" style={iconsStyle}><a
                                                         onClick={this.openJSON}
-                                                        data-doc-id={item.ID}><img
-                                                        src="img/knowledge.png" height="20px"/>
+                                                        data-doc-id={item.ID}><i className="fa fa-file-code" style={{
+                                                        color: "var(--secondary-color)",
+                                                        fontSize: '24px'
+                                                    }}></i>
                                                     </a></div>
                                                 </div>
                                             </div>
@@ -1235,7 +1274,8 @@ class LoadDocuments extends React.Component {
 
                                         </div>)) :
                                     <div> {listLoaded ? <div style={{padding: '10px'}}><h4>No records found</h4></div> :
-                                        <img src="img/loading.gif" style={{margin: '20px', height: '50px'}}/>}</div>}
+                                        null
+                                    }</div>}
                                 {totalHits > loadedDocumentsCount ?
                                     <a onClick={this.loadMore} className="btn btn-secondary">Load More</a> : null}</div>
                         </td>
@@ -1265,7 +1305,7 @@ class LoadDocuments extends React.Component {
                                 </div>
                                 {tabs.length > 0 ?
                                     <ReactCloseableTabs
-                                        tabPanelColor='#41a4ff11'
+                                        tabPanelColor="var(--primary-color-11)"
                                         tabPanelClass='document_tab_panel'
                                         mainClassName='document_tabs'
                                         data={tabs}

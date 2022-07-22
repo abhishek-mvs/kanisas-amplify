@@ -26,7 +26,7 @@ const TabPanel = styled.div`
 
     &.active {
       border-bottom: 2px solid
-        ${props => (props.theme.primary ? props.theme.primary : '#298ae5')};
+        ${props => (props.theme.primary ? props.theme.primary : "var(--secondary-color)")};
     }
     .closeTab {
       width: 20px;

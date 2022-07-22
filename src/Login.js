@@ -146,7 +146,7 @@ class Login extends React.Component {
 
         return (
             <div style={appStyle}>
-                <img src="img/kiku_logo.png" style={imageStyle} alt="Kiku Logo"/>
+                <img src="img/kiku-blue/kiku_logo.png" style={imageStyle} alt="Kiku Logo"/>
                 <Form onSubmit={this.handleSubmit}/>
                 <span className="text text-danger">{loginError}</span>
             </div>
