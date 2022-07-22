@@ -284,6 +284,7 @@ class LoadDocuments extends React.Component {
         this.setState({
             selectedDocumentID: -1
         });
+        this.loaderRef.current.continuousStart(0, 1000);
         let docId = event.currentTarget.getAttribute("data-doc-id");
         fetch(Urls.OPEN_DOCUMENT, {
             method: 'post', body: JSON.stringify({
@@ -291,6 +292,7 @@ class LoadDocuments extends React.Component {
             })
         })
             .then((result) => {
+                this.loaderRef.current.complete();
                 if (result.status === 200) {
                     result.json().then((json) => {
                         let formattedJSON = '<pre>' + JSON.stringify(json, null, 2) + '</pre>';
