@@ -902,20 +902,20 @@ class LoadDocuments extends React.Component {
         };
 
         const headingStyle = {
-            cursor: 'pointer', margin: '0px', fontSize: '14px'
+            cursor: 'pointer', margin: '0px', lineHeight: '20px', maxHeight: '40px', overflow: 'hidden'
         }
         const idStyle = {
-            color: "var(--secondary-color)", fontSize: '16px'
+            color: "var(--secondary-color)", fontSize: '18px'
         };
         const nameStyle = {
             color: "var(--secondary-color)", fontWeight: 'bold', textTransform: 'capitalize'
 
         };
         const descriptionStyle = {
-            overflow: 'hidden', fontSize: '16px', textOverflow: 'ellipsis'
+            lineHeight: '20px', maxHeight: '60px', fontSize: '16px', overflow : 'hidden'
         }
         const metadataStyle = {
-            fontSize: '16px', color: 'grey', paddingTop: '5px'
+            fontSize: '16px', color: 'grey', paddingTop: '5px', lineHeight : '19px'
         }
         const entitlementStyle = {
             height: '200px', backgroundColor: 'white', overflowY: 'scroll'
