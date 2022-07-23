@@ -172,9 +172,14 @@ class LoadDocuments extends React.Component {
     }
 
     chooseTheme(event) {
+        let chosenTheme = event.currentTarget.getAttribute("data-theme");
         this.setState({
-            theme: event.currentTarget.getAttribute("data-theme")
+            theme: chosenTheme
         })
+        fetch(Urls.SAVE_USER_PROFILE, {
+            method: 'post', body: JSON.stringify({"userName": this.state.userProfile.username, "theme": chosenTheme})
+        }).then(r => {
+        });
     }
 
     openDocument(event) {
@@ -345,6 +350,9 @@ class LoadDocuments extends React.Component {
             this.props.history.push('/');
             return;
         }
+        this.setState({
+            theme: cookies.get('user')['theme'],
+        });
         this.loaderRef.current.continuousStart(0, 1000);
         this.loadAllMicrosites();
     }

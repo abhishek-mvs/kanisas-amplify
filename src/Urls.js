@@ -4,6 +4,7 @@ const Urls = {
     DOCUMENT_SEARCH: "https://mofrapbc9b.execute-api.ap-northeast-1.amazonaws.com/default/KnovaSearch3-KnovaSearch2-cu4LV3UGrLQA?au=" + AU,
     OPEN_DOCUMENT: "https://pvobdpynu4.execute-api.ap-northeast-1.amazonaws.com/default/KnovaOpenDocument?au=" + AU,
     GET_AUTO_SUGGESTIONS: "https://rh82xug0cg.execute-api.ap-northeast-1.amazonaws.com/default/Knova-AutoSuggestion?au=" + AU,
+    SAVE_USER_PROFILE: "https://17rw4rmt8k.execute-api.ap-northeast-1.amazonaws.com/default/SaveUserProfile?au=" + AU,
     LOGIN_URL: "https://856xnrxfhd.execute-api.ap-northeast-1.amazonaws.com/default/KnovaUserSignIn?au=" + AU
 }
 
